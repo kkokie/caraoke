@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: songstories-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/songstories}
+    username: ${DATABASE_USER:songstories}
+    password: ${DATABASE_PASSWORD:songstories}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate          # Flyway owns the schema; Hibernate only checks it
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Firebase ID tokens: issuer is securetoken.google.com/<project-id>
+          issuer-uri: https://securetoken.google.com/${FIREBASE_PROJECT_ID:songstories-dev}
+          audiences: ${FIREBASE_PROJECT_ID:songstories-dev}
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  auth:
+    # When true, requests authenticate with an "X-Dev-User: <uid>" header instead of a JWT.
+    # Lets you build and test before Firebase is set up. NEVER enable in production.
+    dev-mode: ${AUTH_DEV_MODE:false}

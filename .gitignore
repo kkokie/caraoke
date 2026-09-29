@@ -1,0 +1,17 @@
+# Java / Maven
+backend/target/
+*.class
+
+# IntelliJ
+.idea/
+*.iml
+
+# Node / Expo
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/ios/
+mobile/android/
+mobile/.env.local
+
+.DS_Store

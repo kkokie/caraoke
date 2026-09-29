@@ -1,0 +1,4 @@
+# Local dev: run with SPRING_PROFILES_ACTIVE=local
+app:
+  auth:
+    dev-mode: true
