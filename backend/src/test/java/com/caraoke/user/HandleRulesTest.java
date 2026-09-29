@@ -1,4 +1,4 @@
-package com.songstories.user;
+package com.caraoke.user;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +29,6 @@ class HandleRulesTest {
     @Test
     void rejectsReserved() {
         assertThat(HandleRules.validate("admin")).isEqualTo("That handle is reserved.");
-        assertThat(HandleRules.validate("songstories")).isNotNull();
+        assertThat(HandleRules.validate("caraoke")).isNotNull();
     }
 }

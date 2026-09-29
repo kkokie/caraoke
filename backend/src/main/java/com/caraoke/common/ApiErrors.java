@@ -1,4 +1,4 @@
-package com.songstories.common;
+package com.caraoke.common;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;

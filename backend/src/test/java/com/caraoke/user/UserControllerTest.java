@@ -1,7 +1,7 @@
-package com.songstories.user;
+package com.caraoke.user;
 
-import com.songstories.config.SecurityConfig;
-import com.songstories.user.UserDtos.*;
+import com.caraoke.config.SecurityConfig;
+import com.caraoke.user.UserDtos.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

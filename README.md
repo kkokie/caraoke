@@ -1,9 +1,9 @@
-# SongStories
+# Caraoke
 
 Share the memories songs hold. Mobile-first (Expo) + Spring Boot API + PostgreSQL.
 
 ```
-songstories/
+caraoke/
 ├── backend/            Spring Boot 3.5 / Java 21 / Flyway / Postgres
 ├── mobile/             Expo (React Native + TypeScript)
 └── docker-compose.yml  Local Postgres
@@ -11,11 +11,11 @@ songstories/
 
 ## Setup in IntelliJ
 
-1. **File → Open** the `songstories/` folder. IntelliJ picks up `backend/pom.xml` as a Maven project.
+1. **File → Open** the `caraoke/` folder. IntelliJ picks up `backend/pom.xml` as a Maven project.
    If it doesn't, right-click `backend/pom.xml` → *Add as Maven Project*.
 2. **Project Structure → SDK:** Java 21.
 3. Start Postgres: `docker compose up -d` (from the repo root).
-4. Run config for `SongStoriesApplication`:
+4. Run config for `CaraokeApplication`:
    - Active profiles: `local` (turns on dev-mode auth)
 5. Run it. Flyway creates the schema on first boot.
 6. Run the tests: right-click `backend/src/test` → *Run 'All Tests'* (or `mvn test`).
@@ -62,9 +62,9 @@ npx expo start                 # scan the QR code with Expo Go
 
 | Var | Default |
 |---|---|
-| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/songstories` |
-| `DATABASE_USER` / `DATABASE_PASSWORD` | `songstories` |
-| `FIREBASE_PROJECT_ID` | `songstories-dev` |
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/caraoke` |
+| `DATABASE_USER` / `DATABASE_PASSWORD` | `caraoke` |
+| `FIREBASE_PROJECT_ID` | `caraoke-dev` |
 | `AUTH_DEV_MODE` | `false` |
 | `PORT` | `8080` |
 

@@ -1,4 +1,4 @@
-package com.songstories.auth;
+package com.caraoke.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

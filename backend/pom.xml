@@ -11,10 +11,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.songstories</groupId>
-    <artifactId>songstories-api</artifactId>
+    <groupId>com.caraoke</groupId>
+    <artifactId>caraoke-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>songstories-api</name>
+    <name>caraoke-api</name>
 
     <properties>
         <java.version>21</java.version>

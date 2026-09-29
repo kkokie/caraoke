@@ -1,7 +1,7 @@
-package com.songstories.user;
+package com.caraoke.user;
 
-import com.songstories.common.ApiErrors;
-import com.songstories.user.UserDtos.*;
+import com.caraoke.common.ApiErrors;
+import com.caraoke.user.UserDtos.*;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
