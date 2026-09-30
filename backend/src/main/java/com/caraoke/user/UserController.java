@@ -1,6 +1,6 @@
-package com.songstories.user;
+package com.caraoke.user;
 
-import com.songstories.user.UserDtos.*;
+import com.caraoke.user.UserDtos.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;

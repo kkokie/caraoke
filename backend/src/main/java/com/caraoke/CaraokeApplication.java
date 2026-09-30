@@ -1,11 +1,11 @@
-package com.songstories;
+package com.caraoke;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SongStoriesApplication {
+public class CaraokeApplication {
     public static void main(String[] args) {
-        SpringApplication.run(SongStoriesApplication.class, args);
+        SpringApplication.run(CaraokeApplication.class, args);
     }
 }

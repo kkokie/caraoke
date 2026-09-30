@@ -1,4 +1,4 @@
-package com.songstories.user;
+package com.caraoke.user;
 
 import java.util.Locale;
 import java.util.Set;
@@ -15,7 +15,7 @@ public final class HandleRules {
     // Handles that could be used to impersonate the app or staff
     private static final Set<String> RESERVED = Set.of(
             "admin", "administrator", "support", "help", "moderator", "mod",
-            "staff", "official", "songstories", "root", "system", "api", "me");
+            "staff", "official", "caraoke", "root", "system", "api", "me");
 
     private HandleRules() { }
 

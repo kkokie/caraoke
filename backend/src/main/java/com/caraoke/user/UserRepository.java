@@ -1,4 +1,4 @@
-package com.songstories.user;
+package com.caraoke.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

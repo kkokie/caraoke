@@ -1,10 +1,10 @@
 spring:
   application:
-    name: songstories-api
+    name: caraoke-api
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/songstories}
-    username: ${DATABASE_USER:songstories}
-    password: ${DATABASE_PASSWORD:songstories}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/caraoke}
+    username: ${DATABASE_USER:caraoke}
+    password: ${DATABASE_PASSWORD:caraoke}
   jpa:
     open-in-view: false
     hibernate:
@@ -16,8 +16,8 @@ spring:
       resourceserver:
         jwt:
           # Firebase ID tokens: issuer is securetoken.google.com/<project-id>
-          issuer-uri: https://securetoken.google.com/${FIREBASE_PROJECT_ID:songstories-dev}
-          audiences: ${FIREBASE_PROJECT_ID:songstories-dev}
+          issuer-uri: https://securetoken.google.com/${FIREBASE_PROJECT_ID:caraoke-dev}
+          audiences: ${FIREBASE_PROJECT_ID:caraoke-dev}
 
 server:
   port: ${PORT:8080}
