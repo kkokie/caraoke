@@ -2,7 +2,7 @@ spring:
   application:
     name: caraoke-api
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/caraoke}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/caraoke}
     username: ${DATABASE_USER:caraoke}
     password: ${DATABASE_PASSWORD:caraoke}
   jpa:
