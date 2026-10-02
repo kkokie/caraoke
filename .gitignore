@@ -15,3 +15,4 @@ mobile/android/
 mobile/.env.local
 
 .DS_Store
+mobile/expo-env.d.ts

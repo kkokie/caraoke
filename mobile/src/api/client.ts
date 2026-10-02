@@ -14,9 +14,31 @@ export type PublicProfile = {
   joinedAt: string;
 };
 
+export type HandleAvailability = {
+  handle: string;
+  available: boolean;
+  reason: string | null;
+};
+
+export type CreateProfileBody = {
+  handle: string;
+  displayName: string;
+  bio?: string;
+};
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
+  }
+}
+
+async function readErrorMessage(res: Response): Promise<string> {
+  // Spring returns { status, error, message, ... }; prefer the human-readable message
+  try {
+    const body = await res.json();
+    return body.message || body.error || `Request failed (${res.status})`;
+  } catch {
+    return `Request failed (${res.status})`;
   }
 }
 
@@ -30,18 +52,19 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
   if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    throw new ApiError(res.status, await readErrorMessage(res));
   }
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
 export const api = {
-  health: () => request<{ status: string }>('/actuator/health'),
   me: () => request<PublicProfile>('/api/me'),
-  createProfile: (body: { handle: string; displayName: string; bio?: string }) =>
+
+  createProfile: (body: CreateProfileBody) =>
     request<PublicProfile>('/api/me', { method: 'POST', body: JSON.stringify(body) }),
-  handleAvailable: (handle: string) =>
-    request<{ handle: string; available: boolean; reason: string | null }>(
-      `/api/handles/${encodeURIComponent(handle)}/available`,
-    ),
+
+  deleteAccount: () => request<void>('/api/me', { method: 'DELETE' }),
+
+  handleAvailable: (handle: string, signal?: AbortSignal) =>
+    request<HandleAvailability>(`/api/handles/${encodeURIComponent(handle)}/available`, { signal }),
 };

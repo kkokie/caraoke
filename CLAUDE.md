@@ -47,6 +47,11 @@ Out of scope for v1: DMs, following, playlists.
 - Handles: lowercase, `[a-z0-9_]{3,20}`, rules centralized in `HandleRules`.
 - Local dev: Spring profile `local` enables the `X-Dev-User` header in place of a JWT. Never enable `AUTH_DEV_MODE` in production.
 - Mobile: add packages with `npx expo install`; run `npx tsc --noEmit` before committing. See `mobile/AGENTS.md`.
+- Mobile layout (same feature-module idea as the backend):
+  - `src/app/`: routes only (Expo Router). Screens stay thin and visual.
+  - `src/features/<feature>/`: hooks and components for one feature (state + logic live in hooks).
+  - `src/components/`: shared UI primitives. `src/api/`: API client. `src/lib/`: pure helpers. `src/theme.ts`: design tokens.
+  - Navigation is driven by session state via `Stack.Protected` in `src/app/_layout.tsx`, not by screens pushing each other.
 
 ## Roadmap
 
