@@ -21,6 +21,10 @@ spring:
 
 server:
   port: ${PORT:8080}
+  error:
+    # Our ResponseStatusException reasons are written for users ("That handle is taken"),
+    # so let the app show them. Never put internals in a reason string.
+    include-message: always
 
 management:
   endpoints:
