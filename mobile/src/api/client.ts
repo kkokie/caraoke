@@ -26,6 +26,33 @@ export type CreateProfileBody = {
   bio?: string;
 };
 
+/** A catalog hit from search. Not saved on our side until someone opens it. */
+export type SongSearchResult = {
+  appleId: string;
+  title: string;
+  artist: string;
+  album: string | null;
+  artworkUrl: string | null;
+  durationSec: number | null;
+};
+
+export type ListenLinks = {
+  appleMusic: string | null;
+  spotify: string;
+  youtubeMusic: string;
+};
+
+/** Our song. `id` is what stories will reference. */
+export type Song = {
+  id: number;
+  title: string;
+  artist: string;
+  album: string | null;
+  artworkUrl: string | null;
+  durationSec: number | null;
+  listen: ListenLinks;
+};
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -67,4 +94,12 @@ export const api = {
 
   handleAvailable: (handle: string, signal?: AbortSignal) =>
     request<HandleAvailability>(`/api/handles/${encodeURIComponent(handle)}/available`, { signal }),
+
+  searchSongs: (query: string, signal?: AbortSignal) =>
+    request<SongSearchResult[]>(`/api/songs/search?q=${encodeURIComponent(query)}`, { signal }),
+
+  resolveSong: (appleId: string) =>
+    request<Song>('/api/songs/resolve', { method: 'POST', body: JSON.stringify({ appleId }) }),
+
+  getSong: (id: number) => request<Song>(`/api/songs/${id}`),
 };

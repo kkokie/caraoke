@@ -25,7 +25,10 @@ Out of scope for v1: DMs, following, playlists.
 | Auth | Firebase Auth (Apple + Google); backend validates Firebase ID tokens as JWTs |
 | Hosting | Railway (Dockerfile in `backend/`) |
 
-**Music data:** do not build on the Spotify Web API. Its Development Mode caps apps at 5 users, and extended quota requires 250k MAU. Use the iTunes Search API / Apple MusicKit for metadata, key songs by ISRC in our own `songs` table, and deep-link out to Spotify, Apple Music, and YouTube. Never host or stream audio.
+**Music data:** do not build on the Spotify Web API. Its Development Mode caps apps at 5 users, and extended quota requires 250k MAU. Use the iTunes Search API / Apple MusicKit for metadata and deep-link out to Spotify, Apple Music, and YouTube. Never host or stream audio.
+- Songs are keyed by **our own `songs.id`**; stories reference only that. The iTunes Search API doesn't return ISRCs, so for now we dedupe on `apple_id`; `isrc` stays null until MusicKit.
+- All catalog access goes through `CatalogClient` (`com.caraoke.song.catalog`). Swapping providers touches only that package.
+- Song metadata is always fetched server-side (`POST /api/songs/resolve` takes only an `appleId`), so clients can't plant fake songs.
 
 ## Working agreement
 
