@@ -19,4 +19,9 @@ public final class ApiErrors {
     public static ResponseStatusException badRequest(String msg) {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, msg);
     }
+
+    /** An upstream service we depend on (e.g. the music catalog) failed. */
+    public static ResponseStatusException badGateway(String msg, Throwable cause) {
+        return new ResponseStatusException(HttpStatus.BAD_GATEWAY, msg, cause);
+    }
 }

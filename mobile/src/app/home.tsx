@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { ProfileCard } from '@/features/profile/ProfileCard';
 import { useSession } from '@/features/session/useSession';
 import { colors, space, type } from '@/theme';
 
-// Placeholder home until Phase 1 (song search + feeds) lands.
+// Home until there's a real feed: profile + a way into song search.
 export default function HomeScreen() {
   const session = useSession();
   if (session.status !== 'ready') return null;   // guard in _layout redirects; this just narrows the type
@@ -14,9 +15,11 @@ export default function HomeScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={type.title}>You’re in.</Text>
-        <Text style={type.subtitle}>Song pages and stories are coming next.</Text>
+        <Text style={type.title}>What are you{'\n'}listening to?</Text>
+        <Text style={type.subtitle}>Find a song to see its page. Stories are coming next.</Text>
       </View>
+
+      <Button label="Find a song" onPress={() => router.push('/search')} />
 
       <ProfileCard profile={session.profile} />
 

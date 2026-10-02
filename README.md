@@ -42,7 +42,7 @@ npm install
 npx expo start                 # scan the QR code with Expo Go
 ```
 
-## API (Phase 0)
+## API
 
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -52,6 +52,9 @@ npx expo start                 # scan the QR code with Expo Go
 | DELETE | `/api/me` | yes | In-app account deletion (App Store requirement) |
 | GET | `/api/users/{handle}` | no | Public profile |
 | GET | `/api/handles/{handle}/available` | no | Live check for onboarding |
+| GET | `/api/songs/search?q=` | yes | Search the music catalog (iTunes). Results aren't saved |
+| POST | `/api/songs/resolve` | yes | `{appleId}` → our song (created on first open; metadata fetched server-side) |
+| GET | `/api/songs/{id}` | yes | Song page data + "listen on" links |
 
 ## Auth
 
