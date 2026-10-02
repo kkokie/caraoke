@@ -34,7 +34,8 @@ function RootNavigator() {
       <Stack.Protected guard={session.status === 'ready'}>
         <Stack.Screen name="home" />
         <Stack.Screen name="search" options={{ ...pushedScreen, title: 'Search' }} />
-        <Stack.Screen name="song/[id]" options={{ ...pushedScreen, title: '' }} />
+        <Stack.Screen name="song/[id]/index" options={{ ...pushedScreen, title: '' }} />
+        <Stack.Screen name="song/[id]/compose" options={{ ...pushedScreen, title: 'Your story', presentation: 'modal' }} />
       </Stack.Protected>
     </Stack>
   );

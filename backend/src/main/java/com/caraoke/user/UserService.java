@@ -6,6 +6,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class UserService {
 
@@ -78,5 +83,22 @@ public class UserService {
 
     private static String blankToNull(String s) {
         return (s == null || s.isBlank()) ? null : s.trim();
+    }
+
+    // ---- Public API for other features ----------------------------------------
+    // Other features use these instead of touching UserRepository or the User entity.
+
+    /** Our internal user id for a signed-in caller, if they've created a profile. */
+    @Transactional(readOnly = true)
+    public Optional<Long> findUserId(String authUid) {
+        return users.findByAuthUid(authUid).map(User::getId);
+    }
+
+    /** Public author info for a batch of user ids (one query, no N+1). */
+    @Transactional(readOnly = true)
+    public Map<Long, Author> findAuthors(Collection<Long> userIds) {
+        if (userIds.isEmpty()) return Map.of();
+        return users.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Author::of));
     }
 }

@@ -34,4 +34,12 @@ public final class UserDtos {
     }
 
     public record HandleAvailability(String handle, boolean available, String reason) { }
+
+    /** How other features (stories, replies) show who wrote something. */
+    public record Author(String handle, String displayName, String avatarUrl) {
+
+        static Author of(User u) {
+            return new Author(u.getHandle(), u.getDisplayName(), u.getAvatarUrl());
+        }
+    }
 }
