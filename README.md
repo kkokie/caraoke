@@ -62,7 +62,7 @@ npx expo start                 # scan the QR code with Expo Go
 
 | Var | Default |
 |---|---|
-| `DATABASE_URL` | `jdbc:postgresql://localhost:5432/caraoke` |
+| `DATABASE_URL` | `jdbc:postgresql://localhost:5433/caraoke` |
 | `DATABASE_USER` / `DATABASE_PASSWORD` | `caraoke` |
 | `FIREBASE_PROJECT_ID` | `caraoke-dev` |
 | `AUTH_DEV_MODE` | `false` |
