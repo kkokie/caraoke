@@ -15,6 +15,16 @@ Out of scope for v1: DMs, following, playlists.
 
 **Public profiles:** every user has a unique public `@handle` to keep the app authentic and discourage bots and spam.
 
+## Platforms
+
+Required targets: **iOS + Android phones** (one Expo codebase; test both), **Apple CarPlay**, and **Android Auto** (plus Android Automotive OS where it comes free).
+
+Car constraints (checked Oct 2026), which shape the design:
+- Neither car platform has a "social / text feed" category. CarPlay entitlements: Audio, Communication, EV Charging, Navigation, Parking, Quick Food Ordering. Android Auto: Media (audio), Messaging, Navigation, POI, IoT, Weather (video/games/browsers are parked-only).
+- So **in the car, caraoke is an audio experience** (CarPlay *Audio* / Android Auto *Media*): stories are **heard, not read**. Plan: text-to-speech of stories now, and optionally recorded voice stories later, browsed through the cars' built-in list/now-playing templates. No reading or typing while driving; posting from the car, if ever, is voice-only.
+- CarPlay needs a paid Apple Developer account plus a **CarPlay Audio entitlement request that Apple reviews** (approval isn't guaranteed). Both car integrations are native code, so they need a **development build, not Expo Go**, wired in through config plugins (never hand-edit `ios/` or `android/`).
+- Design for it now: keep stories short and speakable, and plan a per-song "story queue" API the car player can stream through.
+
 ## Stack
 
 | Layer | Choice |
@@ -63,3 +73,4 @@ Out of scope for v1: DMs, following, playlists.
 - **Phase 2, Safety + launch:** report, block, account deletion (API done), moderation queue, legal pages, store submission.
 - **Phase 3, Connection:** "stories like yours" via embeddings (pgvector).
 - **Phase 4, Growth:** shareable story cards for IG/TikTok.
+- **Car (after Phase 1, alongside the dev-build switch for Firebase Auth):** audio story player for CarPlay + Android Auto (TTS), then the CarPlay entitlement request. Verify the Android phone app in Expo Go during Phase 1.
