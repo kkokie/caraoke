@@ -11,7 +11,10 @@ export type SessionState =
 export type Session = SessionState & {
   reload: () => Promise<void>;
   completeOnboarding: (profile: PublicProfile) => void;
-  resetProfile: () => Promise<void>;
+  /** After editing your profile, so every screen shows the new name/bio. */
+  updateProfile: (profile: PublicProfile) => void;
+  /** Deletes the account (App Store requirement); the guard sends you back to onboarding. */
+  deleteAccount: () => Promise<void>;
 };
 
 export const SessionContext = createContext<Session | null>(null);
@@ -38,8 +41,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setState({ status: 'ready', profile });
   }, []);
 
-  // Dev helper until real auth exists: wipe the profile to re-run onboarding
-  const resetProfile = useCallback(async () => {
+  const updateProfile = useCallback((profile: PublicProfile) => {
+    setState({ status: 'ready', profile });
+  }, []);
+
+  const deleteAccount = useCallback(async () => {
     await api.deleteAccount();
     setState({ status: 'needsProfile' });
   }, []);
@@ -49,8 +55,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [reload]);
 
   const value = useMemo(
-    () => ({ ...state, reload, completeOnboarding, resetProfile }),
-    [state, reload, completeOnboarding, resetProfile],
+    () => ({ ...state, reload, completeOnboarding, updateProfile, deleteAccount }),
+    [state, reload, completeOnboarding, updateProfile, deleteAccount],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

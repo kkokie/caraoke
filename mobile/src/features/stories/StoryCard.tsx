@@ -1,23 +1,31 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { Story } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
 import { ResonateRow } from '@/features/resonance/ResonateRow';
+import { openStoryMenu } from './storyMenu';
 import { formatDuration, timeAgo } from '@/lib/format';
 import { colors, radius, space, type } from '@/theme';
 
-type Props = { story: Story; onDelete?: () => void };
+type Props = { story: Story; onDeleted?: (id: number) => void };
 
-export function StoryCard({ story, onDelete }: Props) {
+export function StoryCard({ story, onDeleted }: Props) {
+  const openAuthor = () => router.push({ pathname: '/user/[handle]', params: { handle: story.author.handle } });
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Avatar name={story.author.displayName} />
-        <View style={styles.who}>
-          <Text style={styles.name} numberOfLines={1}>{story.author.displayName}</Text>
-          <Text style={styles.meta} numberOfLines={1}>@{story.author.handle} · {timeAgo(story.createdAt)}</Text>
-        </View>
-        {story.mine && onDelete ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Delete story" onPress={onDelete} hitSlop={12}>
+        <Pressable accessibilityRole="link" onPress={openAuthor} style={styles.author}>
+          <Avatar name={story.author.displayName} />
+          <View style={styles.who}>
+            <Text style={styles.name} numberOfLines={1}>{story.author.displayName}</Text>
+            <Text style={styles.meta} numberOfLines={1}>
+              @{story.author.handle} · {timeAgo(story.createdAt)}{story.editedAt ? ' · edited' : ''}
+            </Text>
+          </View>
+        </Pressable>
+        {story.mine ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Story options" onPress={() => openStoryMenu(story, onDeleted)} hitSlop={12}>
             <Text style={styles.more}>•••</Text>
           </Pressable>
         ) : null}
@@ -61,6 +69,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  author: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm },
   who: { flex: 1 },
   name: { ...type.body, fontSize: 15, fontWeight: '600' },
   meta: { ...type.hint, color: colors.textMuted },

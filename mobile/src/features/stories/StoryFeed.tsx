@@ -1,7 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { colors, space, type } from '@/theme';
-import { confirmDeleteStory } from './deleteStory';
 import { StoryCard } from './StoryCard';
 import { useStoryFeed } from './useStoryFeed';
 
@@ -28,7 +27,7 @@ export function StoryFeed({ songId }: { songId: number }) {
   return (
     <View style={styles.list}>
       {feed.items.map((story) => (
-        <StoryCard key={story.id} story={story} onDelete={() => confirmDeleteStory(story, feed.removeLocally)} />
+        <StoryCard key={story.id} story={story} onDeleted={feed.removeLocally} />
       ))}
       {feed.nextCursor ? (
         <Button label="Load more stories" variant="ghost" onPress={feed.loadMore} loading={feed.loadingMore} />

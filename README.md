@@ -58,10 +58,14 @@ curl localhost:8080/api/handles/admin/available                            # res
 | GET | `/api/songs/{id}` | yes | Song page data + "listen on" links |
 | GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
 | POST | `/api/songs/{id}/stories` | yes | Post a story `{body, momentSec?, yearOfMemory?}` (needs a profile) |
+| GET | `/api/stories/{id}` | yes | One story (hidden ones only for their author) |
+| PUT | `/api/stories/{id}` | yes | Edit your story: full replace of `{body, momentSec?, yearOfMemory?}`; sets `editedAt` |
 | DELETE | `/api/stories/{id}` | yes | Delete your own story |
 | PUT | `/api/stories/{id}/resonance` | yes | "I felt this too" (idempotent; not on your own story) → `{count, mine}` |
 | DELETE | `/api/stories/{id}/resonance` | yes | Undo (idempotent) → `{count, mine}` |
 | GET | `/api/stories/{id}/resonators` | yes | Who felt it too, newest first (up to 50) |
+| GET | `/api/profiles/{handle}` | yes | Profile header: `{user, stats: {stories, felt}, me}` |
+| GET | `/api/profiles/{handle}/stories?before=&limit=` | yes | Profile grid tiles (cover = album art for now), keyset paged |
 
 ## Auth
 
