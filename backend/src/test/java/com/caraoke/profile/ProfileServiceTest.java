@@ -1,6 +1,8 @@
 package com.caraoke.profile;
 
+import com.caraoke.follow.FollowService;
 import com.caraoke.profile.ProfileDtos.ProfileView;
+import com.caraoke.profile.ProfileDtos.SocialView;
 import com.caraoke.story.AuthorStoriesService;
 import com.caraoke.story.StoryDtos.AuthorStats;
 import com.caraoke.user.UserDtos.PublicProfile;
@@ -17,6 +19,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -28,11 +33,12 @@ class ProfileServiceTest {
 
     @Mock UserService users;
     @Mock AuthorStoriesService authorStories;
+    @Mock FollowService follows;
     ProfileService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileService(users, authorStories);
+        service = new ProfileService(users, authorStories, follows);
     }
 
     @Test
@@ -41,10 +47,13 @@ class ProfileServiceTest {
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
         when(users.getByHandle("sam")).thenReturn(SAM);
         when(authorStories.stats(6L)).thenReturn(new AuthorStats(3, 12));
+        when(follows.counts(6L)).thenReturn(new FollowService.Counts(40, 7));
+        when(follows.isFollowing(5L, 6L)).thenReturn(true);
 
         ProfileView view = service.profile("uid-ian", "sam");
 
         assertThat(view.me()).isFalse();
+        assertThat(view.social()).isEqualTo(new SocialView(40, 7, true));
         assertThat(view.user().handle()).isEqualTo("sam");
         assertThat(view.stats()).isEqualTo(new AuthorStats(3, 12));
     }
@@ -55,8 +64,13 @@ class ProfileServiceTest {
         when(users.findUserId("uid-sam")).thenReturn(Optional.of(6L));
         when(users.getByHandle("sam")).thenReturn(SAM);
         when(authorStories.stats(6L)).thenReturn(new AuthorStats(0, 0));
+        when(follows.counts(6L)).thenReturn(new FollowService.Counts(0, 0));
 
-        assertThat(service.profile("uid-sam", "sam").me()).isTrue();
+        ProfileView view = service.profile("uid-sam", "sam");
+
+        assertThat(view.me()).isTrue();
+        assertThat(view.social().followedByMe()).isFalse();   // never "following yourself"
+        verify(follows, never()).isFollowing(anyLong(), anyLong());
     }
 
     @Test
@@ -66,6 +80,6 @@ class ProfileServiceTest {
         assertThatThrownBy(() -> service.profile("uid-ian", "ghost"))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode().value()).isEqualTo(404));
-        verifyNoInteractions(authorStories);
+        verifyNoInteractions(authorStories, follows);
     }
 }
