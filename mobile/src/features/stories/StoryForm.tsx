@@ -25,11 +25,11 @@ export function StoryForm({ song, existing }: { song: Song; existing?: Story }) 
         label="Your story"
         value={form.body}
         onChangeText={form.setBody}
-        placeholder="Where were you the first time you heard it? Who does it remind you of?"
+        placeholder="Where were you the first time you heard it? Who does it remind you of? Write as much as you want."
         multiline
         autoFocus={!form.isEdit}
         style={styles.body}
-        footer={<Text style={[type.hint, styles.counter]}>{form.body.length}/{MAX_BODY}</Text>}
+        footer={<Text style={[type.hint, styles.counter]}>{form.body.length.toLocaleString()} / {MAX_BODY.toLocaleString()}</Text>}
       />
 
       <View style={styles.row}>
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   songText: { flex: 1 },
   songTitle: { ...type.body, fontWeight: '600' },
   songArtist: { ...type.hint, color: colors.textMuted },
-  body: { minHeight: 140, textAlignVertical: 'top' },
+  body: { minHeight: 220, textAlignVertical: 'top' },
   counter: { color: colors.textMuted, textAlign: 'right' },
   row: { flexDirection: 'row', gap: space.md },
   half: { flex: 1 },

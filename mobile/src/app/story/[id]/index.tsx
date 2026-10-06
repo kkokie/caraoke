@@ -31,7 +31,7 @@ function StoryPage({ story, song }: { story: Story; song: Song }) {
         </View>
       </Pressable>
 
-      <StoryCard story={story} onDeleted={() => router.back()} />
+      <StoryCard story={story} expanded onDeleted={() => router.back()} />
     </Screen>
   );
 }

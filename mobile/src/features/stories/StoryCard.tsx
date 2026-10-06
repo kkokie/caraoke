@@ -7,9 +7,18 @@ import { openStoryMenu } from './storyMenu';
 import { formatDuration, timeAgo } from '@/lib/format';
 import { colors, radius, space, type } from '@/theme';
 
-type Props = { story: Story; onDeleted?: (id: number) => void };
+// Feeds show a preview; the story page shows everything.
+const PREVIEW_LINES = 8;
+const PREVIEW_CHARS = 450;
 
-export function StoryCard({ story, onDeleted }: Props) {
+type Props = {
+  story: Story;
+  onDeleted?: (id: number) => void;
+  /** Show the whole story (story page). Feeds leave this off and collapse long ones. */
+  expanded?: boolean;
+};
+
+export function StoryCard({ story, onDeleted, expanded = false }: Props) {
   const openAuthor = () => router.push({ pathname: '/user/[handle]', params: { handle: story.author.handle } });
 
   return (
@@ -31,12 +40,26 @@ export function StoryCard({ story, onDeleted }: Props) {
         ) : null}
       </View>
 
-      <Text style={styles.body}>{story.body}</Text>
+      <StoryBody story={story} expanded={expanded} />
 
       <StoryChips momentSec={story.momentSec} year={story.yearOfMemory} />
 
       <ResonateRow story={story} />
     </View>
+  );
+}
+
+/** Long stories collapse to a preview with "Read more" that opens the full story page. */
+function StoryBody({ story, expanded }: { story: Story; expanded: boolean }) {
+  const isLong = story.body.length > PREVIEW_CHARS || story.body.split('\n').length > PREVIEW_LINES;
+  if (expanded || !isLong) return <Text style={styles.body}>{story.body}</Text>;
+
+  const openStory = () => router.push({ pathname: '/story/[id]', params: { id: String(story.id) } });
+  return (
+    <Pressable accessibilityRole="link" accessibilityHint="Opens the full story" onPress={openStory}>
+      <Text style={styles.body} numberOfLines={PREVIEW_LINES}>{story.body}</Text>
+      <Text style={styles.readMore}>Read more ›</Text>
+    </Pressable>
   );
 }
 
@@ -75,6 +98,7 @@ const styles = StyleSheet.create({
   meta: { ...type.hint, color: colors.textMuted },
   more: { color: colors.textMuted, fontSize: 14, letterSpacing: 1 },
   body: { ...type.body, lineHeight: 23 },
+  readMore: { ...type.hint, color: colors.accent, fontWeight: '600', marginTop: space.xs },
   chips: { flexDirection: 'row', gap: space.sm },
   chip: { paddingHorizontal: space.sm, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: colors.accent },
   chipText: { ...type.hint, color: colors.accent, fontWeight: '600' },

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { api, Song, Story } from '@/api/client';
 import { formatDuration, parseDuration } from '@/lib/format';
 
-export const MAX_BODY = 2000;
+export const MAX_BODY = 10_000;   // blog-length; mirrors backend StoryRules
 const MIN_YEAR = 1900;
 
 /** Mirrors backend StoryRules so problems show up while typing, not after tapping Post. */

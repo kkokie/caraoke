@@ -8,6 +8,7 @@ A mobile-first social app for sharing the memories and nostalgia songs hold, ins
 
 Core loop (v1):
 - **Song page is the "room":** each song has its own feed of stories.
+- **Stories can be blog-length** (up to 10,000 chars; enforced in `StoryRules` + a DB check). Feeds show an ~8-line preview with "Read more"; the story page shows it all. (Story Radio will read an excerpt, not a whole essay.)
 - **Moments:** a story can pin to a timestamp in the song ("2:14, the bridge…") and a year the memory is from.
 - **"I felt this too" (resonance):** the v1 connection mechanic. People connect by recognizing the same stories.
 
