@@ -1,6 +1,7 @@
 package com.caraoke.config;
 
 import com.caraoke.auth.DevUserFilter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())                       // no cookies/sessions -> no CSRF surface
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // When a controller throws (404, 409, 400...), Spring forwards internally to /error.
+                // That ERROR dispatch must not be re-authenticated, or every error becomes a 401.
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 // Public profiles and handle checks are readable without login
                 .requestMatchers(HttpMethod.GET, "/api/users/*", "/api/handles/*/available").permitAll()
