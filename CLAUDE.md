@@ -44,6 +44,8 @@ Out of scope for v1: DMs, following, playlists.
 - Features talk to each other through **service classes, never another feature's repository or entity internals**.
 - **Small classes, small methods.** No big classes or big methods unless genuinely necessary; split when something grows.
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
+- Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
+- Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging.
 
 ### Conventions
 - Schema changes: new Flyway migration `V<n>__<description>.sql`. Never edit an applied migration.

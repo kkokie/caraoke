@@ -56,6 +56,9 @@ curl localhost:8080/api/handles/admin/available                            # res
 | GET | `/api/songs/search?q=` | yes | Search the music catalog (iTunes). Results aren't saved |
 | POST | `/api/songs/resolve` | yes | `{appleId}` → our song (created on first open; metadata fetched server-side) |
 | GET | `/api/songs/{id}` | yes | Song page data + "listen on" links |
+| GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
+| POST | `/api/songs/{id}/stories` | yes | Post a story `{body, momentSec?, yearOfMemory?}` (needs a profile) |
+| DELETE | `/api/stories/{id}` | yes | Delete your own story |
 
 ## Auth
 

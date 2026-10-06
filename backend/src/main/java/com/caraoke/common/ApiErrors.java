@@ -20,6 +20,10 @@ public final class ApiErrors {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, msg);
     }
 
+    public static ResponseStatusException forbidden(String msg) {
+        return new ResponseStatusException(HttpStatus.FORBIDDEN, msg);
+    }
+
     /** An upstream service we depend on (e.g. the music catalog) failed. */
     public static ResponseStatusException badGateway(String msg, Throwable cause) {
         return new ResponseStatusException(HttpStatus.BAD_GATEWAY, msg, cause);

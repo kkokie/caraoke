@@ -68,6 +68,34 @@ export type Song = {
   listen: ListenLinks;
 };
 
+export type Author = {
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+};
+
+export type Story = {
+  id: number;
+  songId: number;
+  author: Author;
+  body: string;
+  momentSec: number | null;
+  yearOfMemory: number | null;
+  createdAt: string;
+  mine: boolean;
+};
+
+export type StoryPage = {
+  items: Story[];
+  nextCursor: number | null;   // pass as `before` for the next page; null = end of feed
+};
+
+export type PostStoryBody = {
+  body: string;
+  momentSec?: number;
+  yearOfMemory?: number;
+};
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -117,4 +145,12 @@ export const api = {
     request<Song>('/api/songs/resolve', { method: 'POST', body: JSON.stringify({ appleId }) }),
 
   getSong: (id: number) => request<Song>(`/api/songs/${id}`),
+
+  getStories: (songId: number, before?: number | null) =>
+    request<StoryPage>(`/api/songs/${songId}/stories${before ? `?before=${before}` : ''}`),
+
+  postStory: (songId: number, body: PostStoryBody) =>
+    request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),
+
+  deleteStory: (id: number) => request<void>(`/api/stories/${id}`, { method: 'DELETE' }),
 };
