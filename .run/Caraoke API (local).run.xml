@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Caraoke API (local)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.caraoke.CaraokeApplication" />
+    <module name="caraoke-api" />
+    <envs>
+      <env name="SPRING_PROFILES_ACTIVE" value="local" />
+    </envs>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -37,6 +37,7 @@ Out of scope for v1: DMs, following, playlists.
 - One branch per feature: `feat/<name>`.
 - Each feature lands on `main` as **one squashed commit** when merged.
 - Pull before starting work, and don't have two sessions editing the same branch.
+- **CI** (`.github/workflows/ci.yml`) runs backend `mvn test` and mobile `tsc` on every push. A feature isn't ready to merge until it's green.
 
 ### Architecture and code style
 - **Monolith deployment, microservice-style code.** Each feature is a self-contained package under `com.caraoke.<feature>` with its own controller, service, repository, entity, and DTOs.

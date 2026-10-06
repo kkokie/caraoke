@@ -1,7 +1,22 @@
 // Thin fetch wrapper around the Spring Boot API.
 // EXPO_PUBLIC_* env vars are inlined at build time by Expo.
+import Constants from 'expo-constants';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
+const API_PORT = 8080;
+
+/**
+ * Where the API lives:
+ * 1. EXPO_PUBLIC_API_URL if set (staging/prod builds, or a tunnel), else
+ * 2. in development, the same machine that's serving the JS bundle. Expo gives us its
+ *    LAN address in hostUri ("192.168.1.75:8081"), so a new Wi-Fi/IP needs no config change.
+ */
+function resolveBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  const devHost = Constants.expoConfig?.hostUri?.split(':')[0];
+  return devHost ? `http://${devHost}:${API_PORT}` : `http://localhost:${API_PORT}`;
+}
+
+const BASE_URL = resolveBaseUrl();
 
 // Until Firebase is wired up, the backend runs in dev mode and trusts this header.
 const DEV_USER = process.env.EXPO_PUBLIC_DEV_USER;

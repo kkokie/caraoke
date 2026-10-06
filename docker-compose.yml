@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:16
+    restart: unless-stopped   # comes back on its own whenever Docker Desktop starts
     environment:
       POSTGRES_DB: caraoke
       POSTGRES_USER: caraoke
