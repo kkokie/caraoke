@@ -24,7 +24,7 @@ caraoke/
 | Step | How | When |
 |---|---|---|
 | Get changes | `git pull` (or check out the feature branch) | Start of session |
-| Backend tests | **Nothing to do:** GitHub Actions runs them on every push (✅/❌ on the branch/PR) | Automatic |
+| Backend tests | **Nothing to do:** GitHub Actions runs them on every push (✅/❌ on the branch/PR). Running locally? `PersistenceTest` needs Docker Desktop on (it starts a throwaway Postgres) | Automatic |
 | Run the API | IntelliJ ▶ **Caraoke API (local)** (shared run config: builds first, `local` profile set) | Once; DevTools restarts it on rebuild (⌘F9) |
 | Run the app | `cd mobile && npx expo start` → open from Expo Go → Development servers | Once; JS changes hot-reload on their own |
 | New mobile packages | `npm ci` then `npx expo start -c` | Only when `package-lock.json` changed |
@@ -59,6 +59,9 @@ curl localhost:8080/api/handles/admin/available                            # res
 | GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
 | POST | `/api/songs/{id}/stories` | yes | Post a story `{body, momentSec?, yearOfMemory?}` (needs a profile) |
 | DELETE | `/api/stories/{id}` | yes | Delete your own story |
+| PUT | `/api/stories/{id}/resonance` | yes | "I felt this too" (idempotent; not on your own story) → `{count, mine}` |
+| DELETE | `/api/stories/{id}/resonance` | yes | Undo (idempotent) → `{count, mine}` |
+| GET | `/api/stories/{id}/resonators` | yes | Who felt it too, newest first (up to 50) |
 
 ## Auth
 

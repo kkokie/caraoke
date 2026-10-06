@@ -1,5 +1,7 @@
 package com.caraoke.story;
 
+import com.caraoke.resonance.ResonanceService;
+import com.caraoke.resonance.ResonanceSummary;
 import com.caraoke.song.ListenLinks;
 import com.caraoke.song.SongDtos.SongView;
 import com.caraoke.song.SongService;
@@ -25,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
@@ -48,11 +51,12 @@ class StoryServiceTest {
     @Mock StoryRepository stories;
     @Mock SongService songs;
     @Mock UserService users;
+    @Mock ResonanceService resonances;
     StoryService service;
 
     @BeforeEach
     void setUp() {
-        service = new StoryService(stories, songs, users);
+        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances));
     }
 
     // ---- post ---------------------------------------------------------------
@@ -63,6 +67,7 @@ class StoryServiceTest {
         when(songs.get(SONG_ID)).thenReturn(SONG);
         when(stories.save(any(Story.class))).thenAnswer(inv -> withId(inv.getArgument(0), 100L));
         when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
 
         StoryView view = service.post("uid-ian", SONG_ID, new PostStoryRequest("  senior year road trip  ", 134, 2009));
 
@@ -106,11 +111,14 @@ class StoryServiceTest {
                 eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(Long.MAX_VALUE), any(Limit.class)))
                 .thenReturn(List.of(story(30L, IAN), story(20L, OTHER), story(10L, OTHER)));
         when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(List.of(30L, 20L), IAN)).thenReturn(Map.of(20L, new ResonanceSummary(3, true)));
 
         StoryPage page = service.feed("uid-ian", SONG_ID, null, 2);
 
         assertThat(page.items()).extracting(StoryView::id).containsExactly(30L, 20L);
         assertThat(page.items()).extracting(StoryView::mine).containsExactly(true, false);
+        assertThat(page.items()).extracting(StoryView::resonanceCount).containsExactly(0L, 3L);   // no row -> 0
+        assertThat(page.items()).extracting(StoryView::resonatedByMe).containsExactly(false, true);
         assertThat(page.nextCursor()).isEqualTo(20L);
     }
 
@@ -122,6 +130,7 @@ class StoryServiceTest {
                 eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(20L), any(Limit.class)))
                 .thenReturn(List.of(story(10L, OTHER)));
         when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
 
         StoryPage page = service.feed("uid-ian", SONG_ID, 20L, 2);
 
