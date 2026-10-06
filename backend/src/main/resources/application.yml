@@ -11,6 +11,10 @@ spring:
       ddl-auto: validate          # Flyway owns the schema; Hibernate only checks it
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      max-file-size: 5MB        # matches ImageRules.MAX_BYTES
+      max-request-size: 6MB
   security:
     oauth2:
       resourceserver:
@@ -33,6 +37,11 @@ management:
         include: health
 
 app:
+  media:
+    # local = files on disk under local-dir, served at /media/** (dev). Prod will use an
+    # S3-compatible store (Cloudflare R2) behind a CDN; add that implementation when deploying.
+    storage: ${MEDIA_STORAGE:local}
+    local-dir: ${MEDIA_LOCAL_DIR:./data/media}
   auth:
     # When true, requests authenticate with an "X-Dev-User: <uid>" header instead of a JWT.
     # Lets you build and test before Firebase is set up. NEVER enable in production.

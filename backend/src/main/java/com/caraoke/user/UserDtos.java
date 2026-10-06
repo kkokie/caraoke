@@ -1,5 +1,6 @@
 package com.caraoke.user;
 
+import com.caraoke.media.MediaStorage;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -15,10 +16,10 @@ public final class UserDtos {
             @NotBlank @Size(max = 50) String displayName,
             @Size(max = 280) String bio) { }
 
+    /** Profile photo changes go through PUT/DELETE /api/me/avatar (uploads), never a client-supplied URL. */
     public record UpdateProfileRequest(
             @Size(min = 1, max = 50) String displayName,
-            @Size(max = 280) String bio,
-            @Size(max = 512) String avatarUrl) { }
+            @Size(max = 280) String bio) { }
 
     /** What anyone can see. Never exposes auth_uid. */
     public record PublicProfile(
@@ -28,8 +29,8 @@ public final class UserDtos {
             String avatarUrl,
             Instant joinedAt) {
 
-        static PublicProfile of(User u) {
-            return new PublicProfile(u.getHandle(), u.getDisplayName(), u.getBio(), u.getAvatarUrl(), u.getCreatedAt());
+        static PublicProfile of(User u, MediaStorage media) {
+            return new PublicProfile(u.getHandle(), u.getDisplayName(), u.getBio(), avatarUrl(u, media), u.getCreatedAt());
         }
     }
 
@@ -38,8 +39,12 @@ public final class UserDtos {
     /** How other features (stories, replies) show who wrote something. */
     public record Author(String handle, String displayName, String avatarUrl) {
 
-        static Author of(User u) {
-            return new Author(u.getHandle(), u.getDisplayName(), u.getAvatarUrl());
+        static Author of(User u, MediaStorage media) {
+            return new Author(u.getHandle(), u.getDisplayName(), avatarUrl(u, media));
         }
+    }
+
+    private static String avatarUrl(User u, MediaStorage media) {
+        return u.getAvatarKey() == null ? null : media.publicUrl(u.getAvatarKey());
     }
 }
