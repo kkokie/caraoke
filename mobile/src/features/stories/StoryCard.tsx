@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Story } from '@/api/client';
+import { Avatar } from '@/components/Avatar';
+import { ResonateRow } from '@/features/resonance/ResonateRow';
 import { formatDuration, timeAgo } from '@/lib/format';
 import { colors, radius, space, type } from '@/theme';
 
@@ -9,9 +11,7 @@ export function StoryCard({ story, onDelete }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.initial}>{story.author.displayName.charAt(0).toUpperCase()}</Text>
-        </View>
+        <Avatar name={story.author.displayName} />
         <View style={styles.who}>
           <Text style={styles.name} numberOfLines={1}>{story.author.displayName}</Text>
           <Text style={styles.meta} numberOfLines={1}>@{story.author.handle} · {timeAgo(story.createdAt)}</Text>
@@ -26,6 +26,8 @@ export function StoryCard({ story, onDelete }: Props) {
       <Text style={styles.body}>{story.body}</Text>
 
       <StoryChips momentSec={story.momentSec} year={story.yearOfMemory} />
+
+      <ResonateRow story={story} />
     </View>
   );
 }
@@ -59,8 +61,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  initial: { fontSize: 14, fontWeight: '700', color: colors.accentText },
   who: { flex: 1 },
   name: { ...type.body, fontSize: 15, fontWeight: '600' },
   meta: { ...type.hint, color: colors.textMuted },

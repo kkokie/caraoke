@@ -6,7 +6,6 @@ import com.caraoke.song.SongService;
 import com.caraoke.story.StoryDtos.PostStoryRequest;
 import com.caraoke.story.StoryDtos.StoryPage;
 import com.caraoke.story.StoryDtos.StoryView;
-import com.caraoke.user.UserDtos.Author;
 import com.caraoke.user.UserService;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
@@ -14,12 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Year;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Stories on a song. Talks to the song and user features only through their services.
+ * Resonance ("I felt this too") actions live in StoryResonanceService.
  */
 @Service
 public class StoryService {
@@ -30,11 +27,13 @@ public class StoryService {
     private final StoryRepository stories;
     private final SongService songs;
     private final UserService users;
+    private final StoryViewAssembler views;
 
-    public StoryService(StoryRepository stories, SongService songs, UserService users) {
+    public StoryService(StoryRepository stories, SongService songs, UserService users, StoryViewAssembler views) {
         this.stories = stories;
         this.songs = songs;
         this.users = users;
+        this.views = views;
     }
 
     @Transactional
@@ -47,7 +46,7 @@ public class StoryService {
                 StoryRules.body(req.body()),
                 StoryRules.moment(req.momentSec(), song.durationSec()),
                 StoryRules.year(req.yearOfMemory(), Year.now())));
-        return toViews(List.of(story), userId).get(0);
+        return views.toView(story, userId);
     }
 
     @Transactional(readOnly = true)
@@ -78,15 +77,7 @@ public class StoryService {
         boolean hasMore = rows.size() > size;
         List<Story> page = hasMore ? rows.subList(0, size) : rows;
         Long nextCursor = hasMore ? page.get(page.size() - 1).getId() : null;
-        return new StoryPage(toViews(page, viewerId), nextCursor);
-    }
-
-    private List<StoryView> toViews(List<Story> page, Long viewerId) {
-        Set<Long> authorIds = page.stream().map(Story::getUserId).collect(Collectors.toSet());
-        Map<Long, Author> authors = users.findAuthors(authorIds);   // one query for the whole page
-        return page.stream()
-                .map(s -> StoryView.of(s, authors.get(s.getUserId()), viewerId != null && s.isWrittenBy(viewerId)))
-                .toList();
+        return new StoryPage(views.toViews(page, viewerId), nextCursor);
     }
 
     private static int clampPageSize(int requested) {

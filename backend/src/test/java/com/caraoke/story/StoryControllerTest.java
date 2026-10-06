@@ -37,7 +37,7 @@ class StoryControllerTest {
 
     private static final StoryView STORY = new StoryView(
             100L, 7L, new Author("ian", "Ian", null), "senior year road trip", 134, 2009,
-            Instant.parse("2026-10-02T17:00:00Z"), true);
+            Instant.parse("2026-10-02T17:00:00Z"), true, 3L, false);
 
     @Autowired MockMvc mvc;
     @MockitoBean StoryService service;

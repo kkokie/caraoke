@@ -1,13 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { PublicProfile } from '@/api/client';
+import { Avatar } from '@/components/Avatar';
 import { colors, radius, space, type } from '@/theme';
 
 export function ProfileCard({ profile }: { profile: PublicProfile }) {
   return (
     <View style={styles.card}>
-      <View style={styles.avatar}>
-        <Text style={styles.initial}>{profile.displayName.charAt(0).toUpperCase()}</Text>
-      </View>
+      <Avatar name={profile.displayName} size={56} />
       <View style={styles.text}>
         <Text style={styles.name}>{profile.displayName}</Text>
         <Text style={styles.handle}>@{profile.handle}</Text>
@@ -27,15 +26,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initial: { fontSize: 24, fontWeight: '700', color: colors.accentText },
   text: { flex: 1, gap: 2 },
   name: { ...type.body, fontWeight: '600' },
   handle: { ...type.hint, color: colors.textMuted },

@@ -83,6 +83,13 @@ export type Story = {
   yearOfMemory: number | null;
   createdAt: string;
   mine: boolean;
+  resonanceCount: number;   // how many people "felt this too"
+  resonatedByMe: boolean;
+};
+
+export type ResonanceSummary = {
+  count: number;
+  mine: boolean;
 };
 
 export type StoryPage = {
@@ -153,4 +160,12 @@ export const api = {
     request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),
 
   deleteStory: (id: number) => request<void>(`/api/stories/${id}`, { method: 'DELETE' }),
+
+  resonate: (storyId: number) =>
+    request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'PUT' }),
+
+  unresonate: (storyId: number) =>
+    request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'DELETE' }),
+
+  getResonators: (storyId: number) => request<Author[]>(`/api/stories/${storyId}/resonators`),
 };

@@ -1,5 +1,6 @@
 package com.caraoke.story;
 
+import com.caraoke.resonance.ResonanceSummary;
 import com.caraoke.user.UserDtos.Author;
 import jakarta.validation.constraints.NotNull;
 
@@ -25,13 +26,15 @@ public final class StoryDtos {
             Integer momentSec,
             Integer yearOfMemory,
             Instant createdAt,
-            boolean mine) {
+            boolean mine,
+            long resonanceCount,      // how many people felt this too
+            boolean resonatedByMe) {
 
-        static StoryView of(Story s, Author author, boolean mine) {
+        static StoryView of(Story s, Author author, boolean mine, ResonanceSummary resonance) {
             return new StoryView(
                     s.getId(), s.getSongId(), author, s.getBody(), s.getMomentSec(),
                     s.getYearOfMemory() == null ? null : s.getYearOfMemory().intValue(),
-                    s.getCreatedAt(), mine);
+                    s.getCreatedAt(), mine, resonance.count(), resonance.mine());
         }
     }
 

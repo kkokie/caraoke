@@ -36,6 +36,7 @@ function RootNavigator() {
         <Stack.Screen name="search" options={{ ...pushedScreen, title: 'Search' }} />
         <Stack.Screen name="song/[id]/index" options={{ ...pushedScreen, title: '' }} />
         <Stack.Screen name="song/[id]/compose" options={{ ...pushedScreen, title: 'Your story', presentation: 'modal' }} />
+        <Stack.Screen name="story/[id]/felt" options={{ ...pushedScreen, title: 'Felt this too', presentation: 'modal' }} />
       </Stack.Protected>
     </Stack>
   );
