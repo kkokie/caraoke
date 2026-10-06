@@ -9,18 +9,28 @@ caraoke/
 └── docker-compose.yml  Local Postgres
 ```
 
-## Setup in IntelliJ
+## First-time setup
 
-1. **File → Open** the `caraoke/` folder. IntelliJ picks up `backend/pom.xml` as a Maven project.
-   If it doesn't, right-click `backend/pom.xml` → *Add as Maven Project*.
-2. **Project Structure → SDK:** Java 21.
-3. Start Postgres: `docker compose up -d` (from the repo root).
-4. Run config for `CaraokeApplication`:
-   - Active profiles: `local` (turns on dev-mode auth)
-5. Run it. Flyway creates the schema on first boot.
-6. Run the tests: right-click `backend/src/test` → *Run 'All Tests'* (or `mvn test`).
+1. **IntelliJ:** File → Open the repo folder. If `backend/` isn't picked up as Maven, right-click `backend/pom.xml` → *Add as Maven Project*.
+2. **SDK:** Project Structure → SDK = Java 21 (on Apple Silicon pick the **aarch64** build).
+3. **Postgres:** `docker compose up -d` once. It has `restart: unless-stopped`, so it comes back by itself whenever Docker Desktop starts.
+4. **App deps:** `cd mobile && npm ci`
+5. *(Optional)* IntelliJ → Settings → Build, Execution, Deployment → Compiler → **Build project automatically**, and
+   Settings → Advanced Settings → **Allow auto-make to start even if developed application is currently running**.
+   With that on, DevTools restarts the API a second after you save a Java file.
 
-For the mobile app, IntelliJ Ultimate handles TypeScript fine, or use VS Code for `mobile/`.
+## Daily loop
+
+| Step | How | When |
+|---|---|---|
+| Get changes | `git pull` (or check out the feature branch) | Start of session |
+| Backend tests | **Nothing to do:** GitHub Actions runs them on every push (✅/❌ on the branch/PR) | Automatic |
+| Run the API | IntelliJ ▶ **Caraoke API (local)** (shared run config: builds first, `local` profile set) | Once; DevTools restarts it on rebuild (⌘F9) |
+| Run the app | `cd mobile && npx expo start` → open from Expo Go → Development servers | Once; JS changes hot-reload on their own |
+| New mobile packages | `npm ci` then `npx expo start -c` | Only when `package-lock.json` changed |
+
+The app finds the API on its own: it calls port 8080 on the same machine Expo serves from, so a new Wi-Fi or IP needs no config.
+Set `EXPO_PUBLIC_API_URL` in `mobile/.env.local` only to point at a deployed API or when using `expo start --tunnel`.
 
 ## Try the API (dev mode)
 
@@ -31,15 +41,6 @@ curl -X POST -H "X-Dev-User: dev-ian" -H "Content-Type: application/json" \
      -d '{"handle":"ian","displayName":"Ian"}' localhost:8080/api/me        # 201
 curl localhost:8080/api/users/ian                                           # public profile
 curl localhost:8080/api/handles/admin/available                            # reserved
-```
-
-## Run the mobile app
-
-```bash
-cd mobile
-cp .env.example .env.local     # on a real phone, set EXPO_PUBLIC_API_URL to your laptop's LAN IP
-npm install
-npx expo start                 # scan the QR code with Expo Go
 ```
 
 ## API
@@ -55,6 +56,9 @@ npx expo start                 # scan the QR code with Expo Go
 | GET | `/api/songs/search?q=` | yes | Search the music catalog (iTunes). Results aren't saved |
 | POST | `/api/songs/resolve` | yes | `{appleId}` → our song (created on first open; metadata fetched server-side) |
 | GET | `/api/songs/{id}` | yes | Song page data + "listen on" links |
+| GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
+| POST | `/api/songs/{id}/stories` | yes | Post a story `{body, momentSec?, yearOfMemory?}` (needs a profile) |
+| DELETE | `/api/stories/{id}` | yes | Delete your own story |
 
 ## Auth
 
@@ -70,11 +74,3 @@ npx expo start                 # scan the QR code with Expo Go
 | `FIREBASE_PROJECT_ID` | `caraoke-dev` |
 | `AUTH_DEV_MODE` | `false` |
 | `PORT` | `8080` |
-
-## Next (Phase 0 → 1)
-
-- [ ] Create Firebase project; add Firebase Auth to the app (Apple + Google sign-in)
-- [ ] `DELETE /me` should also delete the Firebase user (Firebase Admin SDK)
-- [ ] Deploy backend to Railway (Dockerfile included) + Railway Postgres
-- [ ] Expo Router + onboarding screen (handle picker using `/handles/{h}/available`)
-- [ ] Song search (iTunes Search API) → `songs` upsert → song page + stories

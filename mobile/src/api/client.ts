@@ -1,7 +1,22 @@
 // Thin fetch wrapper around the Spring Boot API.
 // EXPO_PUBLIC_* env vars are inlined at build time by Expo.
+import Constants from 'expo-constants';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
+const API_PORT = 8080;
+
+/**
+ * Where the API lives:
+ * 1. EXPO_PUBLIC_API_URL if set (staging/prod builds, or a tunnel), else
+ * 2. in development, the same machine that's serving the JS bundle. Expo gives us its
+ *    LAN address in hostUri ("192.168.1.75:8081"), so a new Wi-Fi/IP needs no config change.
+ */
+function resolveBaseUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+  const devHost = Constants.expoConfig?.hostUri?.split(':')[0];
+  return devHost ? `http://${devHost}:${API_PORT}` : `http://localhost:${API_PORT}`;
+}
+
+const BASE_URL = resolveBaseUrl();
 
 // Until Firebase is wired up, the backend runs in dev mode and trusts this header.
 const DEV_USER = process.env.EXPO_PUBLIC_DEV_USER;
@@ -53,6 +68,34 @@ export type Song = {
   listen: ListenLinks;
 };
 
+export type Author = {
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+};
+
+export type Story = {
+  id: number;
+  songId: number;
+  author: Author;
+  body: string;
+  momentSec: number | null;
+  yearOfMemory: number | null;
+  createdAt: string;
+  mine: boolean;
+};
+
+export type StoryPage = {
+  items: Story[];
+  nextCursor: number | null;   // pass as `before` for the next page; null = end of feed
+};
+
+export type PostStoryBody = {
+  body: string;
+  momentSec?: number;
+  yearOfMemory?: number;
+};
+
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -102,4 +145,12 @@ export const api = {
     request<Song>('/api/songs/resolve', { method: 'POST', body: JSON.stringify({ appleId }) }),
 
   getSong: (id: number) => request<Song>(`/api/songs/${id}`),
+
+  getStories: (songId: number, before?: number | null) =>
+    request<StoryPage>(`/api/songs/${songId}/stories${before ? `?before=${before}` : ''}`),
+
+  postStory: (songId: number, body: PostStoryBody) =>
+    request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),
+
+  deleteStory: (id: number) => request<void>(`/api/stories/${id}`, { method: 'DELETE' }),
 };
