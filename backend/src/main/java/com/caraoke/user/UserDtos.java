@@ -30,7 +30,7 @@ public final class UserDtos {
             Instant joinedAt) {
 
         static PublicProfile of(User u, MediaStorage media) {
-            return new PublicProfile(u.getHandle(), u.getDisplayName(), u.getBio(), avatarUrl(u, media), u.getCreatedAt());
+            return new PublicProfile(u.getHandle(), u.getDisplayName(), u.getBio(), urlOf(u, media), u.getCreatedAt());
         }
     }
 
@@ -40,11 +40,11 @@ public final class UserDtos {
     public record Author(String handle, String displayName, String avatarUrl) {
 
         static Author of(User u, MediaStorage media) {
-            return new Author(u.getHandle(), u.getDisplayName(), avatarUrl(u, media));
+            return new Author(u.getHandle(), u.getDisplayName(), urlOf(u, media));
         }
     }
 
-    private static String avatarUrl(User u, MediaStorage media) {
+    private static String urlOf(User u, MediaStorage media) {
         return u.getAvatarKey() == null ? null : media.publicUrl(u.getAvatarKey());
     }
 }

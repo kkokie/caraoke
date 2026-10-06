@@ -47,7 +47,7 @@ Core loop (v1):
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
 - **Dependencies between features point one way, with no cycles.** Example: `story` → `resonance`. The resonance feature only stores and counts; the story feature owns the rules (visible, not your own) and the endpoints.
 - **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` + `follow` (user can't call story, because story already calls user).
-  Current graph: `profile → user, story, follow, resonance` · `story → user, song, resonance` · `user, song, resonance, follow → (nothing)`.
+  Current graph: `profile → user, story, follow, resonance` · `story → user, song, resonance` · `user, song, resonance, follow → (nothing)`. `media` is infrastructure (like `common/`): any feature may use it, it uses none.
 - **Tests:** unit tests (Mockito) for services, `@WebMvcTest` for controllers, and `PersistenceTest` (Testcontainers Postgres) for anything with real SQL: native queries, projections, keyset paging. Booting it also proves Flyway and entity mappings agree.
 - Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
 - Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging. When ordering isn't by id (e.g. "stories I felt" by resonance time), use an **opaque cursor** carrying the sort key plus a tiebreaker (`FeltCursor` = createdAt + storyId).
@@ -56,6 +56,7 @@ Core loop (v1):
 ### Conventions
 - Schema changes: new Flyway migration `V<n>__<description>.sql`. Never edit an applied migration.
 - DTOs are Java records. Never expose `auth_uid` in responses.
+- **Media:** the DB stores storage keys (`avatars/<userId>/<uuid>.jpg`), never URLs; DTOs turn keys into URLs via `MediaStorage.publicUrl`. A fresh key per upload (cache forever). Validate uploads by magic bytes (`ImageRules`), never by client content type. Delete old files after commit (`MediaCleanup`). Clients never send a URL for media. Mobile resizes before uploading and loads relative URLs via `mediaUrl()`.
 - Handles: lowercase, `[a-z0-9_]{3,20}`, rules centralized in `HandleRules`.
 - Local dev: Spring profile `local` enables the `X-Dev-User` header in place of a JWT. Never enable `AUTH_DEV_MODE` in production.
 - Mobile: add packages with `npx expo install`; run `npx tsc --noEmit` before committing. See `mobile/AGENTS.md`.

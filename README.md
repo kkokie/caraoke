@@ -49,7 +49,9 @@ curl localhost:8080/api/handles/admin/available                            # res
 |---|---|---|---|
 | GET | `/api/me` | yes | Current profile. `404` means the user still needs to pick a handle |
 | POST | `/api/me` | yes | Create public profile (handle, displayName, bio) |
-| PATCH | `/api/me` | yes | Edit displayName / bio / avatarUrl |
+| PATCH | `/api/me` | yes | Edit displayName / bio |
+| PUT | `/api/me/avatar` | yes | Upload profile photo (multipart field `file`; JPEG/PNG/WebP, ≤5 MB) → profile |
+| DELETE | `/api/me/avatar` | yes | Remove profile photo → profile |
 | DELETE | `/api/me` | yes | In-app account deletion (App Store requirement) |
 | GET | `/api/users/{handle}` | no | Public profile |
 | GET | `/api/handles/{handle}/available` | no | Live check for onboarding |
@@ -69,6 +71,7 @@ curl localhost:8080/api/handles/admin/available                            # res
 | PUT / DELETE | `/api/profiles/{handle}/follow` | yes | Follow / unfollow (idempotent) → `{following, followers}` |
 | GET | `/api/profiles/{handle}/followers` · `/following` | yes | People lists, newest first (up to 100) |
 | GET | `/api/me/felt?cursor=&limit=` | yes | **Private**: stories you felt, newest first, as tiles. Opaque `nextCursor` |
+| GET | `/media/**` | no | Dev only (`MEDIA_STORAGE=local`): serves uploaded files. Prod will use a CDN |
 
 ## Auth
 
@@ -84,3 +87,5 @@ curl localhost:8080/api/handles/admin/available                            # res
 | `FIREBASE_PROJECT_ID` | `caraoke-dev` |
 | `AUTH_DEV_MODE` | `false` |
 | `PORT` | `8080` |
+| `MEDIA_STORAGE` | `local` (files on disk; prod: R2, not built yet) |
+| `MEDIA_LOCAL_DIR` | `./data/media` (git-ignored) |
