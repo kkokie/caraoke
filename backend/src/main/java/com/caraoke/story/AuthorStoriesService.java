@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,20 @@ public class AuthorStoriesService {
         List<Story> page = hasMore ? rows.subList(0, size) : rows;
         Long nextCursor = hasMore ? page.get(page.size() - 1).getId() : null;
         return new StoryTilePage(toTiles(page), nextCursor);
+    }
+
+    /**
+     * Tiles for specific stories in the given order (e.g. "stories I felt").
+     * Stories that were since hidden are skipped; deleted ones are already gone.
+     */
+    @Transactional(readOnly = true)
+    public List<StoryTile> tilesFor(List<Long> storyIds) {
+        if (storyIds.isEmpty()) return List.of();
+        Map<Long, Story> byId = stories.findAllById(storyIds).stream()
+                .filter(Story::isVisible)
+                .collect(Collectors.toMap(Story::getId, s -> s));
+        List<Story> ordered = storyIds.stream().map(byId::get).filter(Objects::nonNull).toList();
+        return toTiles(ordered);
     }
 
     /** Header numbers: how many stories, and how many times people felt them. */

@@ -77,6 +77,17 @@ class AuthorStoriesServiceTest {
         assertThat(service.stats(IAN)).isEqualTo(new AuthorStats(3, 12));
     }
 
+    @Test
+    void tilesForKeepsTheGivenOrderAndSkipsHiddenStories() {
+        Story hidden = story(20L, 7L);
+        ReflectionTestUtils.setField(hidden, "status", StoryStatus.HIDDEN);
+        when(stories.findAllById(List.of(10L, 20L, 30L))).thenReturn(List.of(story(30L, 7L), hidden, story(10L, 7L)));
+        when(songs.findSummaries(anyCollection())).thenReturn(Map.of(7L, new SongSummary(7L, "Yellow", "Coldplay", "https://art/7")));
+        when(resonances.summaries(List.of(10L, 30L), null)).thenReturn(Map.of());
+
+        assertThat(service.tilesFor(List.of(10L, 20L, 30L))).extracting(StoryTile::storyId).containsExactly(10L, 30L);
+    }
+
     private static Story story(long id, long songId) {
         Story s = new Story(IAN, songId, "a memory", null, null);
         ReflectionTestUtils.setField(s, "id", id);

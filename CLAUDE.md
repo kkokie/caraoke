@@ -47,10 +47,11 @@ Core loop (v1):
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
 - **Dependencies between features point one way, with no cycles.** Example: `story` → `resonance`. The resonance feature only stores and counts; the story feature owns the rules (visible, not your own) and the endpoints.
 - **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` + `follow` (user can't call story, because story already calls user).
-  Current graph: `profile → user, story, follow` · `story → user, song, resonance` · `user, song, resonance, follow → (nothing)`.
+  Current graph: `profile → user, story, follow, resonance` · `story → user, song, resonance` · `user, song, resonance, follow → (nothing)`.
 - **Tests:** unit tests (Mockito) for services, `@WebMvcTest` for controllers, and `PersistenceTest` (Testcontainers Postgres) for anything with real SQL: native queries, projections, keyset paging. Booting it also proves Flyway and entity mappings agree.
 - Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
-- Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging.
+- Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging. When ordering isn't by id (e.g. "stories I felt" by resonance time), use an **opaque cursor** carrying the sort key plus a tiebreaker (`FeltCursor` = createdAt + storyId).
+- **Privacy defaults:** what you *felt* is private (only `/api/me/felt`, never by handle).
 
 ### Conventions
 - Schema changes: new Flyway migration `V<n>__<description>.sql`. Never edit an applied migration.

@@ -6,11 +6,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Limit;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
@@ -69,5 +76,38 @@ class ResonanceServiceTest {
     void emptyPageMakesNoQueries() {
         assertThat(service.summaries(List.of(), 5L)).isEmpty();
         verifyNoInteractions(repo);
+    }
+
+    // ---- stories a user felt ---------------------------------------------------
+
+    @Test
+    void feltFirstPageReturnsIdsAndACursorWhenMoreExist() {
+        Instant t = Instant.parse("2026-10-05T20:00:00Z");
+        when(repo.findByIdUserIdOrderByCreatedAtDescIdStoryIdDesc(eq(5L), any(Limit.class)))
+                .thenReturn(List.of(felt(5L, 30L, t), felt(5L, 20L, t), felt(5L, 10L, t.minusSeconds(60))));
+
+        ResonanceService.FeltPage page = service.feltBy(5L, null, 2);
+
+        assertThat(page.storyIds()).containsExactly(30L, 20L);
+        assertThat(page.nextCursor()).isEqualTo(new FeltCursor(t, 20L).encode());
+    }
+
+    @Test
+    void feltNextPageUsesTheCursor() {
+        Instant t = Instant.parse("2026-10-05T20:00:00Z");
+        when(repo.findFeltAfter(eq(5L), eq(t), eq(20L), any(Limit.class)))
+                .thenReturn(List.of(felt(5L, 10L, t.minusSeconds(60))));
+
+        ResonanceService.FeltPage page = service.feltBy(5L, new FeltCursor(t, 20L).encode(), 2);
+
+        assertThat(page.storyIds()).containsExactly(10L);
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    private static Resonance felt(long userId, long storyId, Instant at) {
+        Resonance r = BeanUtils.instantiateClass(Resonance.class);
+        ReflectionTestUtils.setField(r, "id", new ResonanceId(userId, storyId));
+        ReflectionTestUtils.setField(r, "createdAt", at);
+        return r;
     }
 }
