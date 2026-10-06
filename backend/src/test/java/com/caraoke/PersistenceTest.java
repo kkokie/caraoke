@@ -156,7 +156,7 @@ class PersistenceTest {
 
     @Test
     void followGraphIsIdempotentAndCountsBothWays() {
-        long ian = user("ian"), sam = user("sam"), jo = user("jo");
+        long ian = user("ian"), sam = user("sam"), jo = user("joe");
 
         assertThat(follows.insertIfAbsent(ian, sam)).isEqualTo(1);
         assertThat(follows.insertIfAbsent(ian, sam)).isEqualTo(0);       // double tap
