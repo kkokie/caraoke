@@ -12,7 +12,7 @@ Core loop (v1):
 - **Moments:** a story can pin to a timestamp in the song ("2:14, the bridge…") and a year the memory is from.
 - **"I felt this too" (resonance):** the v1 connection mechanic. People connect by recognizing the same stories.
 
-Out of scope for v1: DMs, following, playlists.
+**Following** (followers/following, Follow button) is in. Out of scope for v1: DMs, playlists.
 
 **Public profiles:** every user has a unique public `@handle` to keep the app authentic and discourage bots and spam.
 
@@ -46,8 +46,8 @@ Out of scope for v1: DMs, following, playlists.
 - **Small classes, small methods.** No big classes or big methods unless genuinely necessary; split when something grows.
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
 - **Dependencies between features point one way, with no cycles.** Example: `story` → `resonance`. The resonance feature only stores and counts; the story feature owns the rules (visible, not your own) and the endpoints.
-- **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` (user can't call story, because story already calls user).
-  Current graph: `profile → user, story` · `story → user, song, resonance` · `user, song, resonance → (nothing)`.
+- **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` + `follow` (user can't call story, because story already calls user).
+  Current graph: `profile → user, story, follow` · `story → user, song, resonance` · `user, song, resonance, follow → (nothing)`.
 - **Tests:** unit tests (Mockito) for services, `@WebMvcTest` for controllers, and `PersistenceTest` (Testcontainers Postgres) for anything with real SQL: native queries, projections, keyset paging. Booting it also proves Flyway and entity mappings agree.
 - Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
 - Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging.

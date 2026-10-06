@@ -122,7 +122,13 @@ export type StoryTilePage = {
 export type ProfileView = {
   user: PublicProfile;
   stats: { stories: number; felt: number };
+  social: { followers: number; following: number; followedByMe: boolean };
   me: boolean;
+};
+
+export type FollowState = {
+  following: boolean;
+  followers: number;
 };
 
 export type UpdateProfileBody = {
@@ -173,6 +179,16 @@ export const api = {
   deleteAccount: () => request<void>('/api/me', { method: 'DELETE' }),
 
   getProfile: (handle: string) => request<ProfileView>(`/api/profiles/${encodeURIComponent(handle)}`),
+
+  follow: (handle: string) =>
+    request<FollowState>(`/api/profiles/${encodeURIComponent(handle)}/follow`, { method: 'PUT' }),
+
+  unfollow: (handle: string) =>
+    request<FollowState>(`/api/profiles/${encodeURIComponent(handle)}/follow`, { method: 'DELETE' }),
+
+  getFollowers: (handle: string) => request<Author[]>(`/api/profiles/${encodeURIComponent(handle)}/followers`),
+
+  getFollowing: (handle: string) => request<Author[]>(`/api/profiles/${encodeURIComponent(handle)}/following`),
 
   getProfileStories: (handle: string, before?: number | null) =>
     request<StoryTilePage>(`/api/profiles/${encodeURIComponent(handle)}/stories${before ? `?before=${before}` : ''}`),

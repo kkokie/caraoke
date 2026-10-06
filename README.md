@@ -64,8 +64,10 @@ curl localhost:8080/api/handles/admin/available                            # res
 | PUT | `/api/stories/{id}/resonance` | yes | "I felt this too" (idempotent; not on your own story) → `{count, mine}` |
 | DELETE | `/api/stories/{id}/resonance` | yes | Undo (idempotent) → `{count, mine}` |
 | GET | `/api/stories/{id}/resonators` | yes | Who felt it too, newest first (up to 50) |
-| GET | `/api/profiles/{handle}` | yes | Profile header: `{user, stats: {stories, felt}, me}` |
+| GET | `/api/profiles/{handle}` | yes | Profile header: `{user, stats: {stories, felt}, social: {followers, following, followedByMe}, me}` |
 | GET | `/api/profiles/{handle}/stories?before=&limit=` | yes | Profile grid tiles (cover = album art for now), keyset paged |
+| PUT / DELETE | `/api/profiles/{handle}/follow` | yes | Follow / unfollow (idempotent) → `{following, followers}` |
+| GET | `/api/profiles/{handle}/followers` · `/following` | yes | People lists, newest first (up to 100) |
 
 ## Auth
 
