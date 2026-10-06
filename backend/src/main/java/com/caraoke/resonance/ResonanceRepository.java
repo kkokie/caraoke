@@ -23,6 +23,8 @@ public interface ResonanceRepository extends JpaRepository<Resonance, ResonanceI
 
     long countByIdStoryId(long storyId);
 
+    long countByIdStoryIdIn(Collection<Long> storyIds);
+
     /** Counts for a whole feed page in one query. Stories with zero resonances are simply absent. */
     @Query("select r.id.storyId as storyId, count(r) as total from Resonance r "
          + "where r.id.storyId in :storyIds group by r.id.storyId")

@@ -102,6 +102,38 @@ class PersistenceTest {
         assertThat(secondPage).containsExactly(oldest);
     }
 
+    // ---- profile ------------------------------------------------------------
+
+    @Test
+    void authorGridIsKeysetPagedAndStatsCountOnlyVisible() {
+        long song = song(), ian = user("ian"), sam = user("sam"), fan = user("fan");
+        long first = story(ian, song), hidden = story(ian, song), second = story(ian, song);
+        story(sam, song);                                          // someone else's: never on ian's grid
+        jdbc.update("UPDATE stories SET status = 'HIDDEN' WHERE id = ?", hidden);
+        resonances.insertIfAbsent(fan, first);
+        resonances.insertIfAbsent(fan, second);
+        resonances.insertIfAbsent(sam, second);
+
+        List<Long> page1 = ids(stories.findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
+                ian, StoryStatus.VISIBLE, Long.MAX_VALUE, Limit.of(1)));
+        List<Long> page2 = ids(stories.findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
+                ian, StoryStatus.VISIBLE, page1.get(0), Limit.of(5)));
+        List<Long> visible = stories.findIdsByUserIdAndStatus(ian, StoryStatus.VISIBLE);
+
+        assertThat(page1).containsExactly(second);
+        assertThat(page2).containsExactly(first);
+        assertThat(visible).containsExactlyInAnyOrder(first, second);
+        assertThat(resonances.countByIdStoryIdIn(visible)).isEqualTo(3);
+    }
+
+    @Test
+    void editedAtColumnRoundTrips() {
+        long s = story(user("ian"), song());
+        jdbc.update("UPDATE stories SET edited_at = now() WHERE id = ?", s);
+
+        assertThat(stories.findById(s).orElseThrow().getEditedAt()).isNotNull();
+    }
+
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----
 
     private long user(String handle) {

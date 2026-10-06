@@ -3,7 +3,7 @@ package com.caraoke.story;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.song.SongDtos.SongView;
 import com.caraoke.song.SongService;
-import com.caraoke.story.StoryDtos.PostStoryRequest;
+import com.caraoke.story.StoryDtos.StoryInput;
 import com.caraoke.story.StoryDtos.StoryPage;
 import com.caraoke.story.StoryDtos.StoryView;
 import com.caraoke.user.UserService;
@@ -37,7 +37,7 @@ public class StoryService {
     }
 
     @Transactional
-    public StoryView post(String authUid, long songId, PostStoryRequest req) {
+    public StoryView post(String authUid, long songId, StoryInput req) {
         long userId = requireProfile(authUid);
         SongView song = songs.get(songId);                       // 404 if the song doesn't exist
         Story story = stories.save(new Story(
@@ -58,11 +58,32 @@ public class StoryService {
         return toPage(rows, size, users.findUserId(authUid).orElse(null));
     }
 
+    /** A single story (story page, edit screen). Hidden stories are visible only to their author. */
+    @Transactional(readOnly = true)
+    public StoryView get(String authUid, long storyId) {
+        Long viewerId = users.findUserId(authUid).orElse(null);
+        Story story = stories.findById(storyId)
+                .filter(s -> s.isVisible() || (viewerId != null && s.isWrittenBy(viewerId)))
+                .orElseThrow(() -> ApiErrors.notFound("Story not found"));
+        return views.toView(story, viewerId);
+    }
+
+    /** Authors can rewrite their story, moment, and year. The song stays fixed. */
+    @Transactional
+    public StoryView edit(String authUid, long storyId, StoryInput req) {
+        long userId = requireProfile(authUid);
+        Story story = requireOwnStory(storyId, userId);
+        SongView song = songs.get(story.getSongId());
+        story.edit(
+                StoryRules.body(req.body()),
+                StoryRules.moment(req.momentSec(), song.durationSec()),
+                StoryRules.year(req.yearOfMemory(), Year.now()));
+        return views.toView(story, userId);                      // dirty checking saves on commit
+    }
+
     @Transactional
     public void delete(String authUid, long storyId) {
-        long userId = requireProfile(authUid);
-        Story story = stories.findById(storyId).orElseThrow(() -> ApiErrors.notFound("Story not found"));
-        if (!story.isWrittenBy(userId)) throw ApiErrors.forbidden("You can only delete your own stories.");
+        Story story = requireOwnStory(storyId, requireProfile(authUid));
         stories.delete(story);                                   // resonances/replies cascade in the DB
     }
 
@@ -70,6 +91,12 @@ public class StoryService {
 
     private long requireProfile(String authUid) {
         return users.findUserId(authUid).orElseThrow(() -> ApiErrors.forbidden("Create your profile first."));
+    }
+
+    private Story requireOwnStory(long storyId, long userId) {
+        Story story = stories.findById(storyId).orElseThrow(() -> ApiErrors.notFound("Story not found"));
+        if (!story.isWrittenBy(userId)) throw ApiErrors.forbidden("You can only change your own stories.");
+        return story;
     }
 
     /** We fetched size+1 rows: the extra one only tells us whether another page exists. */

@@ -49,6 +49,12 @@ public class ResonanceService {
                 id -> new ResonanceSummary(counts.getOrDefault(id, 0L), mine.contains(id))));
     }
 
+    /** Total resonances across a set of stories (e.g. everything one person wrote). */
+    @Transactional(readOnly = true)
+    public long totalFor(Collection<Long> storyIds) {
+        return storyIds.isEmpty() ? 0 : resonances.countByIdStoryIdIn(storyIds);
+    }
+
     /** Newest first: the people who felt this story too. */
     @Transactional(readOnly = true)
     public List<Long> recentResonatorIds(long storyId, int limit) {

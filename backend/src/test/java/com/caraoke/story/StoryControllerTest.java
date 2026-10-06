@@ -1,7 +1,7 @@
 package com.caraoke.story;
 
 import com.caraoke.config.SecurityConfig;
-import com.caraoke.story.StoryDtos.PostStoryRequest;
+import com.caraoke.story.StoryDtos.StoryInput;
 import com.caraoke.story.StoryDtos.StoryPage;
 import com.caraoke.story.StoryDtos.StoryView;
 import com.caraoke.user.UserDtos.Author;
@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -37,7 +38,7 @@ class StoryControllerTest {
 
     private static final StoryView STORY = new StoryView(
             100L, 7L, new Author("ian", "Ian", null), "senior year road trip", 134, 2009,
-            Instant.parse("2026-10-02T17:00:00Z"), true, 3L, false);
+            Instant.parse("2026-10-02T17:00:00Z"), null, true, 3L, false);
 
     @Autowired MockMvc mvc;
     @MockitoBean StoryService service;
@@ -49,7 +50,7 @@ class StoryControllerTest {
 
     @Test
     void postReturns201WithTheStory() throws Exception {
-        when(service.post(eq("u1"), eq(7L), any(PostStoryRequest.class))).thenReturn(STORY);
+        when(service.post(eq("u1"), eq(7L), any(StoryInput.class))).thenReturn(STORY);
 
         mvc.perform(post("/api/songs/7/stories").header(USER, "u1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,5 +85,25 @@ class StoryControllerTest {
         mvc.perform(delete("/api/stories/100").header(USER, "u1"))
                 .andExpect(status().isNoContent());
         verify(service).delete("u1", 100L);
+    }
+
+    @Test
+    void getOneStory() throws Exception {
+        when(service.get("u1", 100L)).thenReturn(STORY);
+
+        mvc.perform(get("/api/stories/100").header(USER, "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.body").value("senior year road trip"));
+    }
+
+    @Test
+    void editStory() throws Exception {
+        when(service.edit(eq("u1"), eq(100L), any(StoryInput.class))).thenReturn(STORY);
+
+        mvc.perform(put("/api/stories/100").header(USER, "u1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"body\":\"new words\",\"momentSec\":null,\"yearOfMemory\":2010}"))
+                .andExpect(status().isOk());
+        verify(service).edit(eq("u1"), eq(100L), any(StoryInput.class));
     }
 }

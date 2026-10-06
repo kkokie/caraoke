@@ -23,6 +23,14 @@ public final class SongDtos {
         }
     }
 
+    /** Just enough to draw a song on a tile or a row. */
+    public record SongSummary(long id, String title, String artist, String artworkUrl) {
+
+        static SongSummary of(Song s) {
+            return new SongSummary(s.getId(), s.getTitle(), s.getArtist(), s.getAlbumArtUrl());
+        }
+    }
+
     public record ResolveRequest(
             @NotBlank @Pattern(regexp = "\\d{1,20}", message = "appleId must be numeric") String appleId) { }
 

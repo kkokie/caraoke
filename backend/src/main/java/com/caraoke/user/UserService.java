@@ -94,6 +94,12 @@ public class UserService {
         return users.findByAuthUid(authUid).map(User::getId);
     }
 
+    /** Our internal user id for a public @handle. */
+    @Transactional(readOnly = true)
+    public Optional<Long> findUserIdByHandle(String rawHandle) {
+        return users.findByHandle(HandleRules.normalize(rawHandle)).map(User::getId);
+    }
+
     /** Public author info for a batch of user ids (one query, no N+1). */
     @Transactional(readOnly = true)
     public Map<Long, Author> findAuthors(Collection<Long> userIds) {

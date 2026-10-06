@@ -5,7 +5,7 @@ import com.caraoke.resonance.ResonanceSummary;
 import com.caraoke.song.ListenLinks;
 import com.caraoke.song.SongDtos.SongView;
 import com.caraoke.song.SongService;
-import com.caraoke.story.StoryDtos.PostStoryRequest;
+import com.caraoke.story.StoryDtos.StoryInput;
 import com.caraoke.story.StoryDtos.StoryPage;
 import com.caraoke.story.StoryDtos.StoryView;
 import com.caraoke.user.UserDtos.Author;
@@ -69,7 +69,7 @@ class StoryServiceTest {
         when(users.findAuthors(anySet())).thenReturn(AUTHORS);
         when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
 
-        StoryView view = service.post("uid-ian", SONG_ID, new PostStoryRequest("  senior year road trip  ", 134, 2009));
+        StoryView view = service.post("uid-ian", SONG_ID, new StoryInput("  senior year road trip  ", 134, 2009));
 
         ArgumentCaptor<Story> saved = ArgumentCaptor.forClass(Story.class);
         verify(stories).save(saved.capture());
@@ -87,7 +87,7 @@ class StoryServiceTest {
     void postWithoutProfileIs403() {
         when(users.findUserId("uid-new")).thenReturn(Optional.empty());
 
-        assertStatus(() -> service.post("uid-new", SONG_ID, new PostStoryRequest("hi", null, null)), 403);
+        assertStatus(() -> service.post("uid-new", SONG_ID, new StoryInput("hi", null, null)), 403);
         verifyNoInteractions(stories);
     }
 
@@ -96,7 +96,7 @@ class StoryServiceTest {
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
         when(songs.get(SONG_ID)).thenReturn(SONG);
 
-        assertStatus(() -> service.post("uid-ian", SONG_ID, new PostStoryRequest("hi", 999, null)), 400);
+        assertStatus(() -> service.post("uid-ian", SONG_ID, new StoryInput("hi", 999, null)), 400);
         verifyNoInteractions(stories);
     }
 
@@ -166,6 +166,53 @@ class StoryServiceTest {
         when(stories.findById(anyLong())).thenReturn(Optional.empty());
 
         assertStatus(() -> service.delete("uid-ian", 1L), 404);
+    }
+
+    // ---- get / edit -----------------------------------------------------------
+
+    @Test
+    void editRewritesOwnStoryAndMarksItEdited() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        Story mine = story(30L, IAN);
+        when(stories.findById(30L)).thenReturn(Optional.of(mine));
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
+
+        StoryView view = service.edit("uid-ian", 30L, new StoryInput("  rewritten  ", 60, 2011));
+
+        assertThat(mine.getBody()).isEqualTo("rewritten");
+        assertThat(mine.getEditedAt()).isNotNull();
+        assertThat(view.editedAt()).isNotNull();
+        assertThat(view.momentSec()).isEqualTo(60);
+    }
+
+    @Test
+    void editSomeoneElsesStoryIs403() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(stories.findById(20L)).thenReturn(Optional.of(story(20L, OTHER)));
+
+        assertStatus(() -> service.edit("uid-ian", 20L, new StoryInput("hijack", null, null)), 403);
+        verifyNoInteractions(songs);
+    }
+
+    @Test
+    void editStillValidatesTheMoment() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(stories.findById(30L)).thenReturn(Optional.of(story(30L, IAN)));
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+
+        assertStatus(() -> service.edit("uid-ian", 30L, new StoryInput("ok", 999, null)), 400);
+    }
+
+    @Test
+    void hiddenStoryIsOnlyVisibleToItsAuthor() {
+        Story hidden = story(20L, OTHER);
+        ReflectionTestUtils.setField(hidden, "status", StoryStatus.HIDDEN);
+        when(stories.findById(20L)).thenReturn(Optional.of(hidden));
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+
+        assertStatus(() -> service.get("uid-ian", 20L), 404);
     }
 
     // ---- helpers ------------------------------------------------------------
