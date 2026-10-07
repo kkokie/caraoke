@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Limit;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Runs against a real Postgres 16 in Docker. Booting this context alone proves:
@@ -132,6 +134,19 @@ class PersistenceTest {
         jdbc.update("UPDATE stories SET edited_at = now() WHERE id = ?", s);
 
         assertThat(stories.findById(s).orElseThrow().getEditedAt()).isNotNull();
+    }
+
+    @Test
+    void storiesCanBeBlogLengthButNotUnbounded() {
+        long ian = user("ian"), song = song();
+        long longOne = jdbc.queryForObject(
+                "INSERT INTO stories (user_id, song_id, body) VALUES (?, ?, ?) RETURNING id",
+                Long.class, ian, song, "x".repeat(10_000));
+
+        assertThat(stories.findById(longOne).orElseThrow().getBody()).hasSize(10_000);
+        assertThatThrownBy(() -> jdbc.update(
+                "INSERT INTO stories (user_id, song_id, body) VALUES (?, ?, ?)", ian, song, "x".repeat(10_001)))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----

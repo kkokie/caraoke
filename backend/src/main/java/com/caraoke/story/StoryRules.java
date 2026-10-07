@@ -10,7 +10,7 @@ import java.time.Year;
  */
 final class StoryRules {
 
-    static final int MAX_BODY = 2000;
+    static final int MAX_BODY = 10_000;   // blog-length; mirrored by the stories_body_length DB check
     static final int MIN_YEAR = 1900;
 
     private StoryRules() { }
@@ -18,7 +18,7 @@ final class StoryRules {
     static String body(String raw) {
         String body = raw == null ? "" : raw.strip();
         if (body.isEmpty()) throw ApiErrors.badRequest("Write a few words about this song.");
-        if (body.length() > MAX_BODY) throw ApiErrors.badRequest("Stories are up to " + MAX_BODY + " characters.");
+        if (body.length() > MAX_BODY) throw ApiErrors.badRequest("Stories are up to 10,000 characters.");
         return body;
     }
 

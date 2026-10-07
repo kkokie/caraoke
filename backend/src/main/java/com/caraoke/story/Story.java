@@ -22,8 +22,8 @@ public class Story {
     @Column(name = "song_id", nullable = false)
     private Long songId;
 
-    @Column(nullable = false, length = 2000)
-    private String body;
+    @Column(nullable = false, columnDefinition = "text")
+    private String body;               // up to StoryRules.MAX_BODY (10k) chars
 
     @Column(name = "moment_sec")
     private Integer momentSec;
