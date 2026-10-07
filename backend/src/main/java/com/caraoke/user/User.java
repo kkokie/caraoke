@@ -24,8 +24,8 @@ public class User {
     @Column(length = 280)
     private String bio;
 
-    @Column(name = "avatar_url", length = 512)
-    private String avatarUrl;
+    @Column(name = "avatar_key")
+    private String avatarKey;          // object-storage key (never a URL); see MediaStorage
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -57,10 +57,10 @@ public class User {
     public String getHandle() { return handle; }
     public String getDisplayName() { return displayName; }
     public String getBio() { return bio; }
-    public String getAvatarUrl() { return avatarUrl; }
+    public String getAvatarKey() { return avatarKey; }
     public Instant getCreatedAt() { return createdAt; }
 
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public void setBio(String bio) { this.bio = bio; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    public void setAvatarKey(String avatarKey) { this.avatarKey = avatarKey; }
 }

@@ -3,6 +3,7 @@ import { PublicProfile } from '@/api/client';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
+import { AvatarPicker } from '@/features/profile/AvatarPicker';
 import { MAX_BIO, useEditProfile } from '@/features/profile/useEditProfile';
 import { useSession } from '@/features/session/useSession';
 import { colors, space, type } from '@/theme';
@@ -18,6 +19,7 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
 
   return (
     <Screen>
+      <AvatarPicker profile={profile} />
       <TextField
         label="Handle"
         prefix="@"

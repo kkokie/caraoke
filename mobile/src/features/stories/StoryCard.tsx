@@ -25,7 +25,7 @@ export function StoryCard({ story, onDeleted, expanded = false }: Props) {
     <View style={styles.card}>
       <View style={styles.header}>
         <Pressable accessibilityRole="link" onPress={openAuthor} style={styles.author}>
-          <Avatar name={story.author.displayName} />
+          <Avatar name={story.author.displayName} url={story.author.avatarUrl} />
           <View style={styles.who}>
             <Text style={styles.name} numberOfLines={1}>{story.author.displayName}</Text>
             <Text style={styles.meta} numberOfLines={1}>

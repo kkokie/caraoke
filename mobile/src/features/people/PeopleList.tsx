@@ -31,7 +31,7 @@ function PersonRow({ person }: { person: Author }) {
   const open = () => router.push({ pathname: '/user/[handle]', params: { handle: person.handle } });
   return (
     <Pressable accessibilityRole="link" onPress={open} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <Avatar name={person.displayName} size={40} />
+      <Avatar name={person.displayName} url={person.avatarUrl} size={40} />
       <View style={styles.text}>
         <Text style={styles.name} numberOfLines={1}>{person.displayName}</Text>
         <Text style={styles.handle} numberOfLines={1}>@{person.handle}</Text>

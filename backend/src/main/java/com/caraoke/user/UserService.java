@@ -1,6 +1,8 @@
 package com.caraoke.user;
 
 import com.caraoke.common.ApiErrors;
+import com.caraoke.media.MediaCleanup;
+import com.caraoke.media.MediaStorage;
 import com.caraoke.user.UserDtos.*;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -15,16 +17,18 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository users;
+    private final MediaStorage media;
 
-    public UserService(UserRepository users) {
+    public UserService(UserRepository users, MediaStorage media) {
         this.users = users;
+        this.media = media;
     }
 
     @Transactional(readOnly = true)
     public PublicProfile getMe(String authUid) {
         // 404 here is meaningful: the app routes the user to onboarding (pick a handle)
         return users.findByAuthUid(authUid)
-                .map(PublicProfile::of)
+                .map(this::view)
                 .orElseThrow(() -> ApiErrors.notFound("Profile not created yet"));
     }
 
@@ -43,7 +47,7 @@ public class UserService {
         }
         try {
             User saved = users.saveAndFlush(new User(authUid, handle, req.displayName().trim(), blankToNull(req.bio())));
-            return PublicProfile.of(saved);
+            return view(saved);
         } catch (DataIntegrityViolationException race) {
             // Two people grabbed the same handle at the same moment; the unique index wins
             throw ApiErrors.conflict("That handle is taken");
@@ -55,20 +59,23 @@ public class UserService {
         User u = users.findByAuthUid(authUid).orElseThrow(() -> ApiErrors.notFound("Profile not created yet"));
         if (req.displayName() != null) u.setDisplayName(req.displayName().trim());
         if (req.bio() != null) u.setBio(blankToNull(req.bio()));
-        if (req.avatarUrl() != null) u.setAvatarUrl(blankToNull(req.avatarUrl()));
-        return PublicProfile.of(u);  // dirty checking persists the changes on commit
+        return view(u);  // dirty checking persists the changes on commit
     }
 
     /** In-app account deletion (App Store requirement). FKs cascade stories, resonances, etc. */
     @Transactional
     public void deleteAccount(String authUid) {
-        users.findByAuthUid(authUid).ifPresent(users::delete);
+        users.findByAuthUid(authUid).ifPresent(u -> {
+            String avatar = u.getAvatarKey();
+            users.delete(u);
+            MediaCleanup.deleteAfterCommit(media, avatar);   // the photo goes too, once the delete sticks
+        });
     }
 
     @Transactional(readOnly = true)
     public PublicProfile getByHandle(String rawHandle) {
         return users.findByHandle(HandleRules.normalize(rawHandle))
-                .map(PublicProfile::of)
+                .map(this::view)
                 .orElseThrow(() -> ApiErrors.notFound("User not found"));
     }
 
@@ -79,6 +86,10 @@ public class UserService {
         if (problem != null) return new HandleAvailability(handle, false, problem);
         if (users.existsByHandle(handle)) return new HandleAvailability(handle, false, "That handle is taken");
         return new HandleAvailability(handle, true, null);
+    }
+
+    private PublicProfile view(User u) {
+        return PublicProfile.of(u, media);
     }
 
     private static String blankToNull(String s) {
@@ -105,6 +116,6 @@ public class UserService {
     public Map<Long, Author> findAuthors(Collection<Long> userIds) {
         if (userIds.isEmpty()) return Map.of();
         return users.findAllById(userIds).stream()
-                .collect(Collectors.toMap(User::getId, Author::of));
+                .collect(Collectors.toMap(User::getId, u -> Author.of(u, media)));
     }
 }

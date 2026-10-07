@@ -19,7 +19,7 @@ export function ProfileHeader({ profile }: { profile: ProfileView }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.topRow}>
-        <Avatar name={user.displayName} size={80} />
+        <Avatar name={user.displayName} url={user.avatarUrl} size={80} />
         <Stat value={stats.stories} label={stats.stories === 1 ? 'story' : 'stories'} />
         <Stat value={follow.followers} label={follow.followers === 1 ? 'follower' : 'followers'} onPress={() => openList('followers')} />
         <Stat value={profile.social.following} label="following" onPress={() => openList('following')} />

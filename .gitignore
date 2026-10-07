@@ -16,3 +16,6 @@ mobile/.env.local
 
 .DS_Store
 mobile/expo-env.d.ts
+
+# Local media storage (profile photos etc. in dev)
+data/

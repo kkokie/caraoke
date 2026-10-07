@@ -158,9 +158,20 @@ async function readErrorMessage(res: Response): Promise<string> {
   }
 }
 
+/** Media URLs from the API may be relative ("/media/…" in dev); make them loadable. */
+export function mediaUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  return /^https?:\/\//.test(url) ? url : `${BASE_URL}${url}`;
+}
+
+/** A local image file to upload (React Native's FormData accepts this shape). */
+export type LocalImage = { uri: string; name: string; type: string };
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // FormData (uploads) must let fetch set its own multipart boundary
+  const isForm = typeof FormData !== 'undefined' && init.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isForm ? {} : { 'Content-Type': 'application/json' }),
     ...(init.headers as Record<string, string>),
   };
   if (DEV_USER) headers['X-Dev-User'] = DEV_USER;
@@ -181,6 +192,14 @@ export const api = {
 
   updateProfile: (body: UpdateProfileBody) =>
     request<PublicProfile>('/api/me', { method: 'PATCH', body: JSON.stringify(body) }),
+
+  uploadAvatar: (image: LocalImage) => {
+    const form = new FormData();
+    form.append('file', image as unknown as Blob);
+    return request<PublicProfile>('/api/me/avatar', { method: 'PUT', body: form });
+  },
+
+  removeAvatar: () => request<PublicProfile>('/api/me/avatar', { method: 'DELETE' }),
 
   deleteAccount: () => request<void>('/api/me', { method: 'DELETE' }),
 
