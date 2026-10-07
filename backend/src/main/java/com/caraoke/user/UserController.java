@@ -58,6 +58,12 @@ public class UserController {
         service.deleteAccount(auth.getName());
     }
 
+    /** Find people by @handle or name (signed in only, to slow scraping). */
+    @GetMapping("/search/people")
+    public java.util.List<Author> searchPeople(@RequestParam(name = "q", defaultValue = "") String q) {
+        return service.searchPeople(q);
+    }
+
     // ---- Public ------------------------------------------------------------
 
     @GetMapping("/users/{handle}")
