@@ -99,7 +99,7 @@ Long-term goals: a **sustainable business** (subscription first, partnerships la
 - **No ads** early: they need scale and clash with the intimate tone.
 
 ### Story Radio (car + premium)
-A per-song audio experience: after a song plays, a **host voice reads the stories** people shared about it (TTS first, recorded voice stories later). It is the CarPlay *Audio* / Android Auto *Media* experience and the flagship caraoke+ feature. Design now: stories stay short and speakable; plan a per-song "story queue" API.
+A per-song audio experience: after a song plays, a **host voice reads the stories** people shared about it (TTS first, recorded voice stories later). It is the CarPlay *Audio* / Android Auto *Media* experience and the flagship caraoke+ feature. Design now: stories can be blog-length, so the radio reads an excerpt (or the opening) of long ones; plan a per-song "story queue" API.
 
 ### Data-model decisions made ahead of time
 - Photos live in **`story_media`** (`story_id`, `position`, `storage_key`, `width`, `height`): many per story, ordered; the DB stores object-storage keys only, never blobs. Profile tile = first photo, else `songs.album_art_url`.
