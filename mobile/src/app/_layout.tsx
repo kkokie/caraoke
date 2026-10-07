@@ -57,4 +57,5 @@ const pushedScreen = {
   headerTitleStyle: { color: colors.text },
   headerShadowVisible: false,
   headerBackButtonDisplayMode: 'minimal' as const,
+  animation: 'ios_from_right' as const,   // Android gets the same slide as iPhone (iOS ignores this)
 };
