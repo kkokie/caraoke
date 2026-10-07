@@ -1,6 +1,7 @@
 // Thin fetch wrapper around the Spring Boot API.
 // EXPO_PUBLIC_* env vars are inlined at build time by Expo.
 import Constants from 'expo-constants';
+import { File } from 'expo-file-system';
 
 const API_PORT = 8080;
 
@@ -164,7 +165,7 @@ export function mediaUrl(url: string | null | undefined): string | undefined {
   return /^https?:\/\//.test(url) ? url : `${BASE_URL}${url}`;
 }
 
-/** A local image file to upload (React Native's FormData accepts this shape). */
+/** A local image file to upload. */
 export type LocalImage = { uri: string; name: string; type: string };
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -194,8 +195,10 @@ export const api = {
     request<PublicProfile>('/api/me', { method: 'PATCH', body: JSON.stringify(body) }),
 
   uploadAvatar: (image: LocalImage) => {
+    // Expo's fetch needs a real Blob; RN's old { uri, name, type } parts throw
+    // "Unsupported FormDataPart implementation". expo-file-system's File is a Blob.
     const form = new FormData();
-    form.append('file', image as unknown as Blob);
+    form.append('file', new File(image.uri) as unknown as Blob, image.name);
     return request<PublicProfile>('/api/me/avatar', { method: 'PUT', body: form });
   },
 
