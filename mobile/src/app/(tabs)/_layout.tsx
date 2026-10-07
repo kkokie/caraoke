@@ -41,7 +41,7 @@ function ShareButton() {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Share a story"
-        onPress={() => router.push('/search')}
+        onPress={() => router.push({ pathname: '/search', params: { intent: 'share' } })}
         style={({ pressed }) => [styles.share, pressed && styles.pressed]}>
         <PlusIcon color={colors.accentText} />
       </Pressable>

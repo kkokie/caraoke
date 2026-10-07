@@ -59,9 +59,10 @@ curl localhost:8080/api/handles/admin/available                            # res
 | POST | `/api/songs/resolve` | yes | `{appleId}` → our song (created on first open; metadata fetched server-side) |
 | GET | `/api/songs/{id}` | yes | Song page data + "listen on" links |
 | GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
-| POST | `/api/songs/{id}/stories` | yes | Post a story `{body, momentSec?, yearOfMemory?}` (needs a profile) |
+| POST | `/api/songs/{id}/stories` | yes | Share a story `{body, momentSec?, yearOfMemory?, lyricQuote? (≤120), paper? (cream/dusk/sage/ink)}`. **One per rolling 24h** → `429` with when to come back |
+| GET | `/api/stories/quota` | yes | `{canShare, nextShareAt}` for the one-a-day rule |
 | GET | `/api/stories/{id}` | yes | One story (hidden ones only for their author) |
-| PUT | `/api/stories/{id}` | yes | Edit your story: full replace of `{body, momentSec?, yearOfMemory?}`; sets `editedAt` |
+| PUT | `/api/stories/{id}` | yes | Edit your story: full replace of `{body, momentSec?, yearOfMemory?, lyricQuote?}` (`paper` omitted = unchanged); sets `editedAt`; doesn't count toward the daily story |
 | DELETE | `/api/stories/{id}` | yes | Delete your own story |
 | PUT | `/api/stories/{id}/resonance` | yes | "I felt this too" (idempotent; not on your own story) → `{count, mine}` |
 | DELETE | `/api/stories/{id}/resonance` | yes | Undo (idempotent) → `{count, mine}` |

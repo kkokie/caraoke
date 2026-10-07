@@ -3,6 +3,7 @@ package com.caraoke.story;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.song.SongDtos.SongView;
 import com.caraoke.song.SongService;
+import com.caraoke.story.StoryDtos.ShareQuota;
 import com.caraoke.story.StoryDtos.StoryInput;
 import com.caraoke.story.StoryDtos.StoryPage;
 import com.caraoke.story.StoryDtos.StoryView;
@@ -28,25 +29,36 @@ public class StoryService {
     private final SongService songs;
     private final UserService users;
     private final StoryViewAssembler views;
+    private final DailyShareLimit dailyLimit;
 
-    public StoryService(StoryRepository stories, SongService songs, UserService users, StoryViewAssembler views) {
+    public StoryService(StoryRepository stories, SongService songs, UserService users,
+                        StoryViewAssembler views, DailyShareLimit dailyLimit) {
         this.stories = stories;
         this.songs = songs;
         this.users = users;
         this.views = views;
+        this.dailyLimit = dailyLimit;
     }
 
     @Transactional
     public StoryView post(String authUid, long songId, StoryInput req) {
         long userId = requireProfile(authUid);
         SongView song = songs.get(songId);                       // 404 if the song doesn't exist
-        Story story = stories.save(new Story(
+        Story story = new Story(
                 userId,
                 songId,
                 StoryRules.body(req.body()),
                 StoryRules.moment(req.momentSec(), song.durationSec()),
-                StoryRules.year(req.yearOfMemory(), Year.now())));
-        return views.toView(story, userId);
+                StoryRules.year(req.yearOfMemory(), Year.now()));
+        story.style(StoryRules.lyric(req.lyricQuote()), StoryRules.paper(req.paper()));
+        dailyLimit.check(userId);                                // 429 if today's story is already shared
+        return views.toView(stories.save(story), userId);
+    }
+
+    /** Whether you can share today (the app shows "next story in 6h" instead of a failing form). */
+    @Transactional(readOnly = true)
+    public ShareQuota quota(String authUid) {
+        return dailyLimit.status(requireProfile(authUid));
     }
 
     @Transactional(readOnly = true)
@@ -78,6 +90,7 @@ public class StoryService {
                 StoryRules.body(req.body()),
                 StoryRules.moment(req.momentSec(), song.durationSec()),
                 StoryRules.year(req.yearOfMemory(), Year.now()));
+        story.style(StoryRules.lyric(req.lyricQuote()), StoryRules.paper(req.paper()));
         return views.toView(story, userId);                      // dirty checking saves on commit
     }
 

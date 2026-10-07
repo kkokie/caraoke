@@ -19,7 +19,18 @@ public final class StoryDtos {
     public record StoryInput(
             @NotNull String body,
             Integer momentSec,
-            Integer yearOfMemory) { }
+            Integer yearOfMemory,
+            String lyricQuote,        // optional: the line they felt
+            String paper) {           // optional: "cream" (default), "dusk", "sage", "ink"
+
+        /** Older clients send only the words, moment, and year. */
+        public StoryInput(String body, Integer momentSec, Integer yearOfMemory) {
+            this(body, momentSec, yearOfMemory, null, null);
+        }
+    }
+
+    /** One story a day: whether you can share now, and if not, when you can. */
+    public record ShareQuota(boolean canShare, Instant nextShareAt) { }
 
     public record StoryView(
             long id,
@@ -28,6 +39,8 @@ public final class StoryDtos {
             String body,
             Integer momentSec,
             Integer yearOfMemory,
+            String lyricQuote,
+            String paper,
             Instant createdAt,
             Instant editedAt,         // null = never edited
             boolean mine,
@@ -38,6 +51,7 @@ public final class StoryDtos {
             return new StoryView(
                     s.getId(), s.getSongId(), author, s.getBody(), s.getMomentSec(),
                     s.getYearOfMemory() == null ? null : s.getYearOfMemory().intValue(),
+                    s.getLyricQuote(), s.getPaper().apiValue(),
                     s.getCreatedAt(), s.getEditedAt(), mine, resonance.count(), resonance.mine());
         }
     }

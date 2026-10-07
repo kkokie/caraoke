@@ -12,6 +12,7 @@ final class StoryRules {
 
     static final int MAX_BODY = 10_000;   // blog-length; mirrored by the stories_body_length DB check
     static final int MIN_YEAR = 1900;
+    static final int MAX_LYRIC = 120;     // a line or two, never whole lyrics (copyright); DB column matches
 
     private StoryRules() { }
 
@@ -30,6 +31,25 @@ final class StoryRules {
             throw ApiErrors.badRequest("That moment is past the end of the song.");
         }
         return momentSec;
+    }
+
+    /**
+     * Optional. Double quotes the person typed are dropped (the app draws its own); single quotes
+     * stay, since lyrics start and end with apostrophes ('cause, leavin'). Blank = none.
+     */
+    static String lyric(String raw) {
+        if (raw == null) return null;
+        String line = raw.strip().replaceAll("^[\"“”]+|[\"“”]+$", "").strip();
+        if (line.isEmpty()) return null;
+        if (line.length() > MAX_LYRIC) throw ApiErrors.badRequest("Keep the lyric to a line or two (120 characters).");
+        return line;
+    }
+
+    /** Plus papers wait for caraoke+; until subscriptions exist nobody has them. */
+    static Paper paper(String raw) {
+        Paper paper = Paper.parse(raw);
+        if (paper != null && paper.isPlus()) throw ApiErrors.forbidden("That paper comes with caraoke+.");
+        return paper;
     }
 
     /** Memories can't come from the future. */

@@ -32,3 +32,20 @@ export function PlusIcon({ color, size = 26 }: IconProps) {
     </Svg>
   );
 }
+
+export function BackIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M15 5l-7 7 7 7" />
+    </Svg>
+  );
+}
+
+export function LockIcon({ color, size = 14 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round">
+      <Rect x={5} y={11} width={14} height={9} rx={2} />
+      <Path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </Svg>
+  );
+}

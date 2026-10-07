@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface StoryRepository extends JpaRepository<Story, Long> {
 
@@ -16,6 +17,9 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     /** One author's stories for their profile grid. Backed by idx_stories_user_feed. */
     List<Story> findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
             long userId, StoryStatus status, long beforeId, Limit limit);
+
+    /** Your most recent story, any status (for the one-a-day rule). Backed by idx_stories_user_created (V1). */
+    Optional<Story> findFirstByUserIdOrderByCreatedAtDesc(long userId);
 
     long countByUserIdAndStatus(long userId, StoryStatus status);
 
