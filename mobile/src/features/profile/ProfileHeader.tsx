@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { ProfileView } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
 import { Button } from '@/components/Button';
+import { PhotoViewer } from '@/components/PhotoViewer';
 import { useFollow } from '@/features/follow/useFollow';
 import { makeStyles, space } from '@/theme';
 
@@ -14,13 +16,20 @@ export function ProfileHeader({ profile }: { profile: ProfileView }) {
   const styles = useStyles();
   const { user, stats, me } = profile;
   const follow = useFollow(profile);
+  const [viewing, setViewing] = useState(false);
   const openList = (list: 'followers' | 'following') =>
     router.push({ pathname: `/user/[handle]/${list}`, params: { handle: user.handle } });
 
   return (
     <View style={styles.wrap}>
       <View style={styles.topRow}>
-        <Avatar name={user.displayName} url={user.avatarUrl} size={80} />
+        <Pressable
+          onPress={() => setViewing(true)}
+          disabled={!user.avatarUrl}
+          accessibilityRole="imagebutton"
+          accessibilityLabel={`View ${user.displayName}'s photo`}>
+          <Avatar name={user.displayName} url={user.avatarUrl} size={80} />
+        </Pressable>
         <Stat value={stats.stories} label={stats.stories === 1 ? 'story' : 'stories'} />
         <Stat value={follow.followers} label={follow.followers === 1 ? 'follower' : 'followers'} onPress={() => openList('followers')} />
         <Stat value={profile.social.following} label="following" onPress={() => openList('following')} />
@@ -38,6 +47,8 @@ export function ProfileHeader({ profile }: { profile: ProfileView }) {
       {me
         ? <Button label="Edit profile" variant="ghost" onPress={() => router.push('/profile/edit')} />
         : <Button label={follow.following ? 'Following' : 'Follow'} variant={follow.following ? 'ghost' : 'primary'} onPress={follow.toggle} />}
+
+      <PhotoViewer url={user.avatarUrl} visible={viewing} onClose={() => setViewing(false)} label={user.displayName} />
     </View>
   );
 }

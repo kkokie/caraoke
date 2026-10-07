@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { PublicProfile } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
+import { PhotoViewer } from '@/components/PhotoViewer';
 import { makeStyles, space, useTheme } from '@/theme';
 import { useAvatarPhoto } from './useAvatarPhoto';
 
@@ -20,7 +21,8 @@ export function AvatarPicker({ profile }: { profile: PublicProfile }) {
           </View>
         ) : null}
       </View>
-      <Text style={[type.hint, styles.link]}>{photo.hasPhoto ? 'Change photo' : 'Add photo'}</Text>
+      <Text style={[type.hint, styles.link]}>{photo.hasPhoto ? 'Edit photo' : 'Add photo'}</Text>
+      <PhotoViewer url={profile.avatarUrl} visible={photo.viewing} onClose={photo.closeViewer} label={profile.displayName} />
     </Pressable>
   );
 }
