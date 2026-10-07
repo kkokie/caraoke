@@ -32,11 +32,15 @@ function RootNavigator() {
         <Stack.Screen name="onboarding" />
       </Stack.Protected>
       <Stack.Protected guard={session.status === 'ready'}>
-        <Stack.Screen name="home" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="search" options={{ ...pushedScreen, title: 'Search' }} />
         <Stack.Screen name="song/[id]/index" options={{ ...pushedScreen, title: '' }} />
         <Stack.Screen name="song/[id]/compose" options={{ ...pushedScreen, title: 'Your story', presentation: 'modal' }} />
         <Stack.Screen name="story/[id]/felt" options={{ ...pushedScreen, title: 'Felt this too', presentation: 'modal' }} />
+        <Stack.Screen name="story/[id]/index" options={{ ...pushedScreen, title: 'Story' }} />
+        <Stack.Screen name="story/[id]/edit" options={{ ...pushedScreen, title: 'Edit story', presentation: 'modal' }} />
+        <Stack.Screen name="user/[handle]" options={{ ...pushedScreen, title: '' }} />
+        <Stack.Screen name="profile/edit" options={{ ...pushedScreen, title: 'Edit profile', presentation: 'modal' }} />
       </Stack.Protected>
     </Stack>
   );

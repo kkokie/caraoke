@@ -2,6 +2,7 @@ package com.caraoke.song;
 
 import com.caraoke.common.ApiErrors;
 import com.caraoke.song.SongDtos.SearchResult;
+import com.caraoke.song.SongDtos.SongSummary;
 import com.caraoke.song.SongDtos.SongView;
 import com.caraoke.song.catalog.CatalogClient;
 import com.caraoke.song.catalog.CatalogTrack;
@@ -9,8 +10,11 @@ import com.caraoke.song.catalog.CatalogUnavailableException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Public entry point to the song feature. Other features (stories, resonance) call this,
@@ -51,6 +55,13 @@ public class SongService {
         return songs.findById(id)
                 .map(SongView::of)
                 .orElseThrow(() -> ApiErrors.notFound("Song not found"));
+    }
+
+    /** For other features: song summaries for a batch of ids (one query). */
+    public Map<Long, SongSummary> findSummaries(Collection<Long> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return songs.findAllById(ids).stream()
+                .collect(Collectors.toMap(Song::getId, SongSummary::of));
     }
 
     private Song importFromCatalog(String appleId) {

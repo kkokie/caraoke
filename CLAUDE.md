@@ -55,6 +55,8 @@ Car constraints (checked Oct 2026), which shape the design:
 - **Small classes, small methods.** No big classes or big methods unless genuinely necessary; split when something grows.
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
 - **Dependencies between features point one way, with no cycles.** Example: `story` → `resonance`. The resonance feature only stores and counts; the story feature owns the rules (visible, not your own) and the endpoints.
+- **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` (user can't call story, because story already calls user).
+  Current graph: `profile → user, story` · `story → user, song, resonance` · `user, song, resonance → (nothing)`.
 - **Tests:** unit tests (Mockito) for services, `@WebMvcTest` for controllers, and `PersistenceTest` (Testcontainers Postgres) for anything with real SQL: native queries, projections, keyset paging. Booting it also proves Flyway and entity mappings agree.
 - Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
 - Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging.
@@ -70,6 +72,7 @@ Car constraints (checked Oct 2026), which shape the design:
   - `src/features/<feature>/`: hooks and components for one feature (state + logic live in hooks).
   - `src/components/`: shared UI primitives. `src/api/`: API client. `src/lib/`: pure helpers. `src/theme.ts`: design tokens.
   - Navigation is driven by session state via `Stack.Protected` in `src/app/_layout.tsx`, not by screens pushing each other.
+  - Bottom tabs live in `src/app/(tabs)/` (Home, Profile) using `expo-router/js-tabs`; everything else is a stack screen pushed over them.
 
 ## Roadmap
 

@@ -82,6 +82,7 @@ export type Story = {
   momentSec: number | null;
   yearOfMemory: number | null;
   createdAt: string;
+  editedAt: string | null;   // null = never edited
   mine: boolean;
   resonanceCount: number;   // how many people "felt this too"
   resonatedByMe: boolean;
@@ -101,6 +102,32 @@ export type PostStoryBody = {
   body: string;
   momentSec?: number;
   yearOfMemory?: number;
+};
+
+/** One square on a profile grid. coverUrl = album art (later: first photo, falling back to album art). */
+export type StoryTile = {
+  storyId: number;
+  songId: number;
+  songTitle: string | null;
+  artist: string | null;
+  coverUrl: string | null;
+  resonanceCount: number;
+};
+
+export type StoryTilePage = {
+  items: StoryTile[];
+  nextCursor: number | null;
+};
+
+export type ProfileView = {
+  user: PublicProfile;
+  stats: { stories: number; felt: number };
+  me: boolean;
+};
+
+export type UpdateProfileBody = {
+  displayName?: string;
+  bio?: string;
 };
 
 export class ApiError extends Error {
@@ -140,7 +167,15 @@ export const api = {
   createProfile: (body: CreateProfileBody) =>
     request<PublicProfile>('/api/me', { method: 'POST', body: JSON.stringify(body) }),
 
+  updateProfile: (body: UpdateProfileBody) =>
+    request<PublicProfile>('/api/me', { method: 'PATCH', body: JSON.stringify(body) }),
+
   deleteAccount: () => request<void>('/api/me', { method: 'DELETE' }),
+
+  getProfile: (handle: string) => request<ProfileView>(`/api/profiles/${encodeURIComponent(handle)}`),
+
+  getProfileStories: (handle: string, before?: number | null) =>
+    request<StoryTilePage>(`/api/profiles/${encodeURIComponent(handle)}/stories${before ? `?before=${before}` : ''}`),
 
   handleAvailable: (handle: string, signal?: AbortSignal) =>
     request<HandleAvailability>(`/api/handles/${encodeURIComponent(handle)}/available`, { signal }),
@@ -158,6 +193,12 @@ export const api = {
 
   postStory: (songId: number, body: PostStoryBody) =>
     request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),
+
+  getStory: (id: number) => request<Story>(`/api/stories/${id}`),
+
+  /** Full replace: omitted moment/year are cleared. */
+  editStory: (id: number, body: PostStoryBody) =>
+    request<Story>(`/api/stories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 
   deleteStory: (id: number) => request<void>(`/api/stories/${id}`, { method: 'DELETE' }),
 

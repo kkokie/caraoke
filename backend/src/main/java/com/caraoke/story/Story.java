@@ -38,6 +38,9 @@ public class Story {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "edited_at")
+    private Instant editedAt;
+
     protected Story() { }  // JPA
 
     Story(long userId, long songId, String body, Integer momentSec, Short yearOfMemory) {
@@ -53,6 +56,18 @@ public class Story {
         createdAt = Instant.now();
     }
 
+    /** Author edits keep the song and the author; everything else can change. */
+    void edit(String body, Integer momentSec, Short yearOfMemory) {
+        this.body = body;
+        this.momentSec = momentSec;
+        this.yearOfMemory = yearOfMemory;
+        this.editedAt = Instant.now();
+    }
+
+    boolean isVisible() {
+        return status == StoryStatus.VISIBLE;
+    }
+
     boolean isWrittenBy(long userId) {
         return this.userId == userId;
     }
@@ -65,4 +80,5 @@ public class Story {
     public Short getYearOfMemory() { return yearOfMemory; }
     public StoryStatus getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getEditedAt() { return editedAt; }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { api, Song } from '@/api/client';
+import { api, Song, Story } from '@/api/client';
 import { formatDuration, parseDuration } from '@/lib/format';
 
 export const MAX_BODY = 2000;
@@ -25,11 +25,14 @@ function validateYear(text: string): { value?: number; error?: string } {
   return { value: year };
 }
 
-/** All composer state + submit; the screen just renders it. */
-export function useComposeStory(song: Song) {
-  const [body, setBody] = useState('');
-  const [momentText, setMomentText] = useState('');
-  const [yearText, setYearText] = useState('');
+/**
+ * All composer state + submit; the screen just renders it.
+ * Pass `existing` to edit a story (fields start filled in, submit replaces it).
+ */
+export function useComposeStory(song: Song, existing?: Story) {
+  const [body, setBody] = useState(existing?.body ?? '');
+  const [momentText, setMomentText] = useState(existing?.momentSec != null ? formatDuration(existing.momentSec) : '');
+  const [yearText, setYearText] = useState(existing?.yearOfMemory != null ? String(existing.yearOfMemory) : '');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -42,10 +45,12 @@ export function useComposeStory(song: Song) {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await api.postStory(song.id, { body: body.trim(), momentSec: moment.value, yearOfMemory: year.value });
-      router.back();   // the song page refreshes its feed on focus
+      const payload = { body: body.trim(), momentSec: moment.value, yearOfMemory: year.value };
+      if (existing) await api.editStory(existing.id, payload);
+      else await api.postStory(song.id, payload);
+      router.back();   // the previous screen refreshes on focus
     } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'Couldn’t post your story');
+      setSubmitError(e instanceof Error ? e.message : 'Couldn’t save your story');
       setSubmitting(false);
     }
   }
@@ -55,5 +60,6 @@ export function useComposeStory(song: Song) {
     momentText, setMomentText, momentError: moment.error,
     yearText, setYearText, yearError: year.error,
     canSubmit, submitting, submitError, submit,
+    isEdit: !!existing,
   };
 }
