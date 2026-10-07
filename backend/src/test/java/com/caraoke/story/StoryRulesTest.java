@@ -60,6 +60,7 @@ class StoryRulesTest {
         assertThat(StoryRules.lyric("   ")).isNull();
         assertThat(StoryRules.lyric("“we were static on the radio”")).isEqualTo("we were static on the radio");
         assertThat(StoryRules.lyric("\"don't stop\"")).isEqualTo("don't stop");
+        assertThat(StoryRules.lyric("'Cause I'm leavin'")).isEqualTo("'Cause I'm leavin'");   // apostrophes are lyrics
         assertThat(StoryRules.lyric("x".repeat(StoryRules.MAX_LYRIC))).hasSize(StoryRules.MAX_LYRIC);
         assertBadRequest(() -> StoryRules.lyric("x".repeat(StoryRules.MAX_LYRIC + 1)));
     }

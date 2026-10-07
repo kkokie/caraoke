@@ -3,7 +3,13 @@ import { GestureResponderEvent, LayoutChangeEvent, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { makeStyles } from '@/theme';
 
-type Props = { value: number; durationSec: number; onChange: (sec: number) => void };
+type Props = {
+  value: number;
+  durationSec: number;
+  onChange: (sec: number) => void;
+  /** Tells the screen to stop scrolling while you drag (iOS would otherwise steal the gesture). */
+  onScrubbing?: (active: boolean) => void;
+};
 
 const THUMB = 28;
 
@@ -11,7 +17,7 @@ const THUMB = 28;
  * Drag (or tap) along the song to pick the second that gets you. A plain responder view,
  * so no slider package is needed. A light tick of haptics every 10 seconds you pass.
  */
-export function MomentScrubber({ value, durationSec, onChange }: Props) {
+export function MomentScrubber({ value, durationSec, onChange, onScrubbing }: Props) {
   const styles = useStyles();
   const [width, setWidth] = useState(0);
   const lastTick = useRef(Math.floor(value / 10));
@@ -37,8 +43,13 @@ export function MomentScrubber({ value, durationSec, onChange }: Props) {
       onStartShouldSetResponder={() => true}
       onMoveShouldSetResponder={() => true}
       onResponderTerminationRequest={() => false}
-      onResponderGrant={seek}
+      onResponderGrant={(e) => {
+        onScrubbing?.(true);
+        seek(e);
+      }}
       onResponderMove={seek}
+      onResponderRelease={() => onScrubbing?.(false)}
+      onResponderTerminate={() => onScrubbing?.(false)}
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel="Moment in the song"

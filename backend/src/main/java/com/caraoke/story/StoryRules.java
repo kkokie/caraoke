@@ -33,10 +33,13 @@ final class StoryRules {
         return momentSec;
     }
 
-    /** Optional. Quotes the person typed are dropped (the app draws its own). Blank = none. */
+    /**
+     * Optional. Double quotes the person typed are dropped (the app draws its own); single quotes
+     * stay, since lyrics start and end with apostrophes ('cause, leavin'). Blank = none.
+     */
     static String lyric(String raw) {
         if (raw == null) return null;
-        String line = raw.strip().replaceAll("^[\"“”'‘’]+|[\"“”'‘’]+$", "").strip();
+        String line = raw.strip().replaceAll("^[\"“”]+|[\"“”]+$", "").strip();
         if (line.isEmpty()) return null;
         if (line.length() > MAX_LYRIC) throw ApiErrors.badRequest("Keep the lyric to a line or two (120 characters).");
         return line;

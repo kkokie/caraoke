@@ -5,6 +5,8 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { TextField } from '@/components/TextField';
 import { SongRow } from '@/features/songs/SongRow';
 import { useOpenSong } from '@/features/songs/useOpenSong';
+import { ComeBackTomorrow } from '@/features/share/ShareFlow';
+import { useShareQuota } from '@/features/share/useShareQuota';
 import { SongSearchState, useSongSearch } from '@/features/songs/useSongSearch';
 import { makeStyles, space, useTheme } from '@/theme';
 
@@ -15,7 +17,17 @@ export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const search = useSongSearch(query);
   const { open, openingId } = useOpenSong(sharing ? 'share' : 'browse');
+  const quota = useShareQuota(sharing);   // from the + tab: say "tomorrow" before they pick a song
   const items = search.kind === 'results' ? search.items : [];
+
+  if (quota.kind === 'used') {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Share a story' }} />
+        <ComeBackTomorrow nextShareAt={quota.nextShareAt} withTopBar={false} />
+      </>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom', 'left', 'right']}>

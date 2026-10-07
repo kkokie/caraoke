@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { BackHandler, KeyboardAvoidingView, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Song, Story } from '@/api/client';
@@ -29,6 +29,7 @@ export function ShareFlow({ song, existing, origin }: Props) {
 function Steps({ song, existing, origin }: Props) {
   const styles = useStyles();
   const draft = useShareDraft(song, existing, origin);
+  const [scrubbing, setScrubbing] = useState(false);   // the page holds still while you drag the moment
   const last = draft.index === STEPS.length - 1;
 
   // Android's back button steps back too, instead of throwing the draft away
@@ -45,9 +46,10 @@ function Steps({ song, existing, origin }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom', 'left', 'right']}>
       <TopBar onBack={draft.back} label={`${draft.index + 1} OF ${STEPS.length}`} />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {draft.step === 'moment' ? <MomentStep draft={draft} /> : null}
+      {/* padding on both platforms: Android draws edge-to-edge, so the window no longer resizes for the keyboard */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" scrollEnabled={!scrubbing}>
+          {draft.step === 'moment' ? <MomentStep draft={draft} onScrubbing={setScrubbing} /> : null}
           {draft.step === 'words' ? <WordsStep draft={draft} /> : null}
           {draft.step === 'look' ? <LookStep draft={draft} /> : null}
         </ScrollView>
@@ -77,11 +79,11 @@ function TopBar({ onBack, label }: { onBack: () => void; label: string }) {
 }
 
 /** One story a day. Said kindly, with when the next one unlocks. */
-function ComeBackTomorrow({ nextShareAt }: { nextShareAt: Date }) {
+export function ComeBackTomorrow({ nextShareAt, withTopBar = true }: { nextShareAt: Date; withTopBar?: boolean }) {
   const styles = useStyles();
   return (
-    <SafeAreaView style={styles.safe}>
-      <TopBar onBack={() => router.back()} label="" />
+    <SafeAreaView style={styles.safe} edges={withTopBar ? ['top', 'bottom', 'left', 'right'] : ['bottom', 'left', 'right']}>
+      {withTopBar ? <TopBar onBack={() => router.back()} label="" /> : null}
       <View style={styles.rest}>
         <Text style={styles.restTitle}>You’ve shared today’s story.</Text>
         <Text style={styles.restBody}>

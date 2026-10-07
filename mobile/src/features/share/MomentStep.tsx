@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { formatDuration } from '@/lib/format';
 import { makeStyles, radius, space } from '@/theme';
@@ -6,20 +6,22 @@ import { MomentScrubber } from './MomentScrubber';
 import { MIN_YEAR, ShareDraft } from './useShareDraft';
 
 /** Step 1: the second that gets you (or the whole song) and the year the memory is from. */
-export function MomentStep({ draft }: { draft: ShareDraft }) {
+type Props = { draft: ShareDraft; onScrubbing: (active: boolean) => void };
+
+export function MomentStep({ draft, onScrubbing }: Props) {
   const styles = useStyles();
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>
         Where does it <Text style={styles.accent}>hit you?</Text>
       </Text>
-      <MomentPicker draft={draft} />
+      <MomentPicker draft={draft} onScrubbing={onScrubbing} />
       <YearPicker year={draft.year} onChange={draft.setYear} />
     </View>
   );
 }
 
-function MomentPicker({ draft }: { draft: ShareDraft }) {
+function MomentPicker({ draft, onScrubbing }: Props) {
   const styles = useStyles();
   const duration = draft.song.durationSec;
   const { momentSec, setMomentSec } = draft;
@@ -34,7 +36,7 @@ function MomentPicker({ draft }: { draft: ShareDraft }) {
         {momentSec == null ? 'whole song' : formatDuration(momentSec)}
       </Text>
       <View style={styles.full}>
-        <MomentScrubber value={momentSec ?? 0} durationSec={duration} onChange={setMomentSec} />
+        <MomentScrubber value={momentSec ?? 0} durationSec={duration} onChange={setMomentSec} onScrubbing={onScrubbing} />
         <View style={styles.ends}>
           <Text style={styles.endLabel}>0:00</Text>
           <Text style={styles.endLabel}>{formatDuration(duration)}</Text>
@@ -57,12 +59,25 @@ function YearPicker({ year, onChange }: { year: number | null; onChange: (y: num
     const now = new Date().getFullYear();
     return Array.from({ length: now - MIN_YEAR + 1 }, (_, i) => now - i);
   }, []);
+  const list = useRef<FlatList<number>>(null);
+
+  // Editing an older story: bring its year into view once, instead of leaving it far off-screen
+  const initialIndex = year == null ? -1 : years.indexOf(year);
+  useEffect(() => {
+    if (initialIndex < 0) return;
+    const t = setTimeout(() => list.current?.scrollToIndex({ index: initialIndex, viewPosition: 0.4, animated: false }), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View style={styles.yearBlock}>
       <Text style={styles.label}>WHAT YEAR IS THIS MEMORY FROM?</Text>
       <FlatList
+        ref={list}
         horizontal
+        onScrollToIndexFailed={(info) =>
+          list.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false })}
         data={years}
         keyExtractor={String}
         showsHorizontalScrollIndicator={false}

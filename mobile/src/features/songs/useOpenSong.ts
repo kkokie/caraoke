@@ -17,7 +17,7 @@ export function useOpenSong(intent: 'browse' | 'share' = 'browse') {
     try {
       const song = await api.resolveSong(result.appleId);
       if (intent === 'share') {
-        router.replace({ pathname: '/song/[id]/compose', params: { id: String(song.id), from: 'plus' } });
+        router.push({ pathname: '/song/[id]/compose', params: { id: String(song.id), from: 'plus' } });
       } else {
         router.push({ pathname: '/song/[id]', params: { id: String(song.id) } });
       }
