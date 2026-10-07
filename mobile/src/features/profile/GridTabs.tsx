@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, space, type } from '@/theme';
+import { Pressable, Text, View } from 'react-native';
+import { makeStyles, space } from '@/theme';
 
 export type GridTab = 'stories' | 'felt';
 
 /** "Stories | Felt" switcher above your own grid. Felt is private, so others never see this. */
 export function GridTabs({ tab, onChange }: { tab: GridTab; onChange: (t: GridTab) => void }) {
+  const styles = useStyles();
   return (
     <View style={styles.row} accessibilityRole="tablist">
       <TabButton label="Stories" active={tab === 'stories'} onPress={() => onChange('stories')} />
@@ -14,6 +15,7 @@ export function GridTabs({ tab, onChange }: { tab: GridTab; onChange: (t: GridTa
 }
 
 function TabButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const styles = useStyles();
   return (
     <Pressable accessibilityRole="tab" accessibilityState={{ selected: active }} onPress={onPress}
       style={[styles.tab, active && styles.active]}>
@@ -22,10 +24,10 @@ function TabButton({ label, active, onPress }: { label: string; active: boolean;
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.border, marginTop: space.sm },
   tab: { flex: 1, alignItems: 'center', paddingVertical: space.sm, borderBottomWidth: 2, borderBottomColor: 'transparent' },
   active: { borderBottomColor: colors.accent },
   label: { ...type.hint, fontWeight: '600', color: colors.textMuted },
   activeLabel: { color: colors.text },
-});
+}));

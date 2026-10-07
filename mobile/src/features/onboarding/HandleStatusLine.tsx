@@ -1,14 +1,16 @@
-import { StyleSheet, Text } from 'react-native';
-import { colors, type } from '@/theme';
+import { Text } from 'react-native';
+import { makeStyles, Palette, useTheme } from '@/theme';
 import { HandleStatus } from './useHandleAvailability';
 
 /** The one-line status under the handle input. */
 export function HandleStatusLine({ status }: { status: HandleStatus }) {
-  const { text, color } = describe(status);
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const { text, color } = describe(status, colors);
   return <Text style={[styles.line, { color }]}>{text}</Text>;
 }
 
-function describe(status: HandleStatus): { text: string; color: string } {
+function describe(status: HandleStatus, colors: Palette): { text: string; color: string } {
   switch (status.kind) {
     case 'empty':
       return { text: 'This is how people find you. You can’t change it later.', color: colors.textMuted };
@@ -25,6 +27,6 @@ function describe(status: HandleStatus): { text: string; color: string } {
   }
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   line: type.hint,
-});
+}));

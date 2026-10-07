@@ -1,9 +1,12 @@
-import { ColorValue, StyleSheet, Text } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
-import { colors } from '@/theme';
+import { DiscoverIcon, PlusIcon, YouIcon } from '@/components/icons';
+import { makeStyles, useTheme } from '@/theme';
 
-/** Bottom tabs: Home (discover songs) and Profile (your dashboard). */
+/** Bottom tabs: Discover · ＋ (share a story) · You. */
 export default function TabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{
@@ -14,22 +17,48 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.textMuted,
       }}>
       <Tabs.Screen
-        name="home"
-        options={{ title: 'Home', tabBarIcon: ({ color }) => <Glyph char="♪" color={color} /> }}
+        name="discover"
+        options={{ title: 'Discover', tabBarIcon: ({ color }) => <DiscoverIcon color={String(color)} /> }}
+      />
+      <Tabs.Screen
+        name="share"
+        options={{ title: 'Share a story', tabBarButton: () => <ShareButton /> }}
       />
       <Tabs.Screen
         name="me"
-        options={{ title: 'Profile', tabBarIcon: ({ color }) => <Glyph char="◉" color={color} /> }}
+        options={{ title: 'You', tabBarIcon: ({ color }) => <YouIcon color={String(color)} /> }}
       />
     </Tabs>
   );
 }
 
-/** Text glyphs as icons, so we don't need an icon package yet. */
-function Glyph({ char, color }: { char: string; color: ColorValue }) {
-  return <Text style={[styles.glyph, { color }]}>{char}</Text>;
+/** The raised amber "+" in the middle. Starts sharing from anywhere. */
+function ShareButton() {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  return (
+    <View style={styles.slot}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Share a story"
+        onPress={() => router.push('/search')}
+        style={({ pressed }) => [styles.share, pressed && styles.pressed]}>
+        <PlusIcon color={colors.accentText} />
+      </Pressable>
+    </View>
+  );
 }
 
-const styles = StyleSheet.create({
-  glyph: { fontSize: 20 },
-});
+const useStyles = makeStyles(({ colors }) => ({
+  slot: { flex: 1, alignItems: 'center' },
+  share: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginTop: -14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accent,
+  },
+  pressed: { opacity: 0.85 },
+}));

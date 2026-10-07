@@ -1,12 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
 import { HandleStatusLine } from '@/features/onboarding/HandleStatusLine';
 import { useOnboardingForm } from '@/features/onboarding/useOnboardingForm';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 
 export default function OnboardingScreen() {
+  const styles = useStyles();
+  const { type } = useTheme();
   const form = useOnboardingForm();
 
   return (
@@ -55,10 +57,10 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   header: { gap: space.sm, marginTop: space.xl },
   bio: { minHeight: 88, textAlignVertical: 'top' },
   counter: { color: colors.textMuted, textAlign: 'right' },
   footer: { marginTop: 'auto', gap: space.sm },
   error: { color: colors.danger, textAlign: 'center' },
-});
+}));

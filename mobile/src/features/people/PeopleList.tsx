@@ -1,16 +1,18 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Author } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
 import { LoadingState } from '@/components/LoadingState';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 import { PeopleState } from './usePeople';
 
 type Props = { state: PeopleState; header?: string; empty: string };
 
 /** A tappable list of people. Each row opens that person's profile. */
 export function PeopleList({ state, header, empty }: Props) {
+  const styles = useStyles();
+  const { type } = useTheme();
   if (state.kind !== 'ready') return <LoadingState error={state.kind === 'error' ? state.message : null} />;
 
   return (
@@ -28,6 +30,7 @@ export function PeopleList({ state, header, empty }: Props) {
 }
 
 function PersonRow({ person }: { person: Author }) {
+  const styles = useStyles();
   const open = () => router.push({ pathname: '/user/[handle]', params: { handle: person.handle } });
   return (
     <Pressable accessibilityRole="link" onPress={open} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
@@ -40,7 +43,7 @@ function PersonRow({ person }: { person: Author }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   safe: { flex: 1, backgroundColor: colors.bg },
   list: { padding: space.lg, gap: space.md },
   header: { marginBottom: space.sm },
@@ -50,4 +53,4 @@ const styles = StyleSheet.create({
   name: { ...type.body, fontWeight: '600' },
   handle: { ...type.hint, color: colors.textMuted },
   center: { textAlign: 'center', marginTop: space.xl },
-});
+}));

@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Story } from '@/api/client';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space } from '@/theme';
 import { useResonance } from './useResonance';
 
 /**
@@ -9,6 +9,7 @@ import { useResonance } from './useResonance';
  * Your own story shows only the count, since you can't resonate with yourself.
  */
 export function ResonateRow({ story }: { story: Story }) {
+  const styles = useStyles();
   const { count, mine, toggle } = useResonance(story);
   const openPeople = () => router.push({ pathname: '/story/[id]/felt', params: { id: String(story.id) } });
 
@@ -25,6 +26,7 @@ export function ResonateRow({ story }: { story: Story }) {
 }
 
 function FeltButton({ active, onPress }: { active: boolean; onPress: () => void }) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -45,7 +47,7 @@ function countLabel(count: number, isMyStory: boolean): string {
   return `${count} felt this`;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.xs },
   pill: {
     paddingHorizontal: space.md,
@@ -59,4 +61,4 @@ const styles = StyleSheet.create({
   pillText: { ...type.hint, color: colors.text, fontWeight: '600' },
   pillTextActive: { color: colors.accentText },
   count: { ...type.hint, color: colors.textMuted },
-});
+}));

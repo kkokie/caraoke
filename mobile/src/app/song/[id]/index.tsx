@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Song } from '@/api/client';
 import { Screen } from '@/components/Screen';
@@ -9,9 +9,11 @@ import { ListenButtons } from '@/features/songs/ListenButtons';
 import { useSong } from '@/features/songs/useSong';
 import { StoryFeed } from '@/features/stories/StoryFeed';
 import { formatDuration } from '@/lib/format';
-import { colors, radius, space, type } from '@/theme';
+import { makeStyles, radius, space, useTheme } from '@/theme';
 
 export default function SongScreen() {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const state = useSong(Number(id));
 
@@ -21,6 +23,8 @@ export default function SongScreen() {
 }
 
 function SongPage({ song }: { song: Song }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   const compose = () => router.push({ pathname: '/song/[id]/compose', params: { id: String(song.id) } });
 
   return (
@@ -47,15 +51,16 @@ function SongPage({ song }: { song: Song }) {
 }
 
 function Centered({ children }: { children: ReactNode }) {
+  const styles = useStyles();
   return <View style={styles.centered}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   hero: { alignItems: 'center', gap: space.md, marginTop: space.md },
   titles: { alignItems: 'center', gap: space.xs },
-  title: { ...type.title, fontSize: 26, textAlign: 'center' },
+  title: { ...type.title, fontSize: 28, lineHeight: 32, textAlign: 'center' },
   center: { textAlign: 'center' },
   stories: { gap: space.md, marginTop: space.sm },
   centered: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg },
   error: { color: colors.danger, textAlign: 'center' },
-});
+}));
