@@ -4,8 +4,9 @@ import { Story } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
 import { ResonateRow } from '@/features/resonance/ResonateRow';
 import { openStoryMenu } from './storyMenu';
-import { formatDuration, timeAgo } from '@/lib/format';
-import { makeStyles, radius, space } from '@/theme';
+import { timeAgo } from '@/lib/format';
+import { makeStyles, paperOf, radius, space } from '@/theme';
+import { StoryPaper } from './StoryPaper';
 
 // Feeds show a preview; the story page shows everything.
 const PREVIEW_LINES = 8;
@@ -43,46 +44,37 @@ export function StoryCard({ story, onDeleted, expanded = false }: Props) {
 
       <StoryBody story={story} expanded={expanded} />
 
-      <StoryChips momentSec={story.momentSec} year={story.yearOfMemory} />
-
       <ResonateRow story={story} />
     </View>
   );
 }
 
-/** Long stories collapse to a preview with "Read more" that opens the full story page. */
+/**
+ * The story printed on its paper. Long stories collapse to a preview with "Read more",
+ * which opens the full story page.
+ */
 function StoryBody({ story, expanded }: { story: Story; expanded: boolean }) {
   const styles = useStyles();
   const isLong = story.body.length > PREVIEW_CHARS || story.body.split('\n').length > PREVIEW_LINES;
-  if (expanded || !isLong) return <Text style={styles.body}>{story.body}</Text>;
+  const collapsed = !expanded && isLong;
+  const paper = (
+    <StoryPaper
+      paper={story.paper}
+      body={story.body}
+      lyric={story.lyricQuote}
+      momentSec={story.momentSec}
+      year={story.yearOfMemory}
+      bodyLines={collapsed ? PREVIEW_LINES : undefined}>
+      {collapsed ? <Text style={[styles.readMore, { color: paperOf(story.paper).muted }]}>Read more ›</Text> : null}
+    </StoryPaper>
+  );
+  if (!collapsed) return paper;
 
   const openStory = () => router.push({ pathname: '/story/[id]', params: { id: String(story.id) } });
   return (
     <Pressable accessibilityRole="link" accessibilityHint="Opens the full story" onPress={openStory}>
-      <Text style={styles.body} numberOfLines={PREVIEW_LINES}>{story.body}</Text>
-      <Text style={styles.readMore}>Read more ›</Text>
+      {paper}
     </Pressable>
-  );
-}
-
-/** "at 2:14" and "2009" tags. These are what make a story feel anchored in the song and in time. */
-function StoryChips({ momentSec, year }: { momentSec: number | null; year: number | null }) {
-  const styles = useStyles();
-  if (momentSec == null && year == null) return null;
-  return (
-    <View style={styles.chips}>
-      {momentSec != null ? <Chip label={`▶ ${formatDuration(momentSec)}`} /> : null}
-      {year != null ? <Chip label={String(year)} /> : null}
-    </View>
-  );
-}
-
-function Chip({ label }: { label: string }) {
-  const styles = useStyles();
-  return (
-    <View style={styles.chip}>
-      <Text style={styles.chipText}>{label}</Text>
-    </View>
   );
 }
 
@@ -101,9 +93,5 @@ const useStyles = makeStyles(({ colors, type }) => ({
   name: { ...type.body, fontSize: 15, fontWeight: '600' },
   meta: { ...type.hint, color: colors.textMuted },
   more: { color: colors.textMuted, fontSize: 14, letterSpacing: 1 },
-  body: type.story,
-  readMore: { ...type.hint, color: colors.accent, fontWeight: '600', marginTop: space.xs },
-  chips: { flexDirection: 'row', gap: space.sm },
-  chip: { paddingHorizontal: space.sm, paddingVertical: 3, borderRadius: 999, borderWidth: 1, borderColor: colors.accent },
-  chipText: { ...type.mono, color: colors.accent },
+  readMore: { ...type.hint, fontWeight: '600' },
 }));

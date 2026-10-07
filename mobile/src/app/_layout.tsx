@@ -40,10 +40,10 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="search" options={{ ...pushedScreen, title: 'Search' }} />
         <Stack.Screen name="song/[id]/index" options={{ ...pushedScreen, title: '' }} />
-        <Stack.Screen name="song/[id]/compose" options={{ ...pushedScreen, title: 'Your story' }} />
+        <Stack.Screen name="song/[id]/compose" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="story/[id]/felt" options={{ ...pushedScreen, title: 'Felt this too' }} />
         <Stack.Screen name="story/[id]/index" options={{ ...pushedScreen, title: 'Story' }} />
-        <Stack.Screen name="story/[id]/edit" options={{ ...pushedScreen, title: 'Edit story' }} />
+        <Stack.Screen name="story/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="user/[handle]/index" options={{ ...pushedScreen, title: '' }} />
         <Stack.Screen name="user/[handle]/followers" options={{ ...pushedScreen, title: 'Followers' }} />
         <Stack.Screen name="user/[handle]/following" options={{ ...pushedScreen, title: 'Following' }} />

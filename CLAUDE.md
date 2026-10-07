@@ -10,6 +10,9 @@ Core loop (v1):
 - **Song page is the "room":** each song has its own feed of stories.
 - **Stories can be blog-length** (up to 10,000 chars; enforced in `StoryRules` + a DB check). Feeds show an ~8-line preview with "Read more"; the story page shows it all. (Story Radio will read an excerpt, not a whole essay.)
 - **Moments:** a story can pin to a timestamp in the song ("2:14, the bridge…") and a year the memory is from.
+- **Sharing is the core feature** (`features/share`, 3 steps): moment + year → the lyric line (optional, typed from memory, ≤120 chars, shown in the lyric font) + the story → how it looks (album-art cover, paper color). Stories print on their author's paper (`theme/papers.ts`, same in light and dark).
+- **One story a day** (rolling 24h, `DailyShareLimit`; edits don't count). Fewer, more genuine stories.
+- **Treasure hunting, not a social network:** never push people to follow; no feed filters or ranking yet.
 - **"I felt this too" (resonance):** the v1 connection mechanic. People connect by recognizing the same stories.
 
 **Following** (followers/following, Follow button) is in. Out of scope for v1: DMs, playlists.

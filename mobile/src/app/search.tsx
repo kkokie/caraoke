@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { TextField } from '@/components/TextField';
 import { SongRow } from '@/features/songs/SongRow';
 import { useOpenSong } from '@/features/songs/useOpenSong';
@@ -9,16 +10,19 @@ import { makeStyles, space, useTheme } from '@/theme';
 
 export default function SearchScreen() {
   const styles = useStyles();
+  const { intent } = useLocalSearchParams<{ intent?: string }>();
+  const sharing = intent === 'share';
   const [query, setQuery] = useState('');
   const search = useSongSearch(query);
-  const { open, openingId } = useOpenSong();
+  const { open, openingId } = useOpenSong(sharing ? 'share' : 'browse');
   const items = search.kind === 'results' ? search.items : [];
 
   return (
     <SafeAreaView style={styles.safe} edges={['bottom', 'left', 'right']}>
+      {sharing ? <Stack.Screen options={{ title: 'Share a story' }} /> : null}
       <View style={styles.searchBox}>
         <TextField
-          label="Find a song"
+          label={sharing ? 'Which song is it about?' : 'Find a song'}
           value={query}
           onChangeText={setQuery}
           placeholder="Title or artist"

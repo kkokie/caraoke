@@ -3,6 +3,8 @@ import { dark, light, Palette } from './palettes';
 import { TypeScale, typeFor } from './type';
 
 export { fonts, fontAssets } from './fonts';
+export { papers, paperNames, paperOf } from './papers';
+export type { PaperColors } from './papers';
 export type { Palette } from './palettes';
 
 export const space = { xs: 4, sm: 8, md: 16, lg: 24, xl: 40 } as const;

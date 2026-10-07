@@ -82,6 +82,8 @@ export type Story = {
   body: string;
   momentSec: number | null;
   yearOfMemory: number | null;
+  lyricQuote: string | null; // the line they felt, typed from memory
+  paper: PaperName;          // the paper the story is printed on
   createdAt: string;
   editedAt: string | null;   // null = never edited
   mine: boolean;
@@ -99,11 +101,18 @@ export type StoryPage = {
   nextCursor: number | null;   // pass as `before` for the next page; null = end of feed
 };
 
+export type PaperName = 'cream' | 'dusk' | 'sage' | 'ink' | 'rose' | 'tape';
+
 export type PostStoryBody = {
   body: string;
   momentSec?: number;
   yearOfMemory?: number;
+  lyricQuote?: string;
+  paper?: PaperName;
 };
+
+/** One story a day: can you share now, and if not, when (ISO time). */
+export type ShareQuota = { canShare: boolean; nextShareAt: string | null };
 
 /** One square on a profile grid. coverUrl = album art (later: first photo, falling back to album art). */
 export type StoryTile = {
@@ -242,6 +251,8 @@ export const api = {
     request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),
 
   getStory: (id: number) => request<Story>(`/api/stories/${id}`),
+
+  getShareQuota: () => request<ShareQuota>('/api/stories/quota'),
 
   /** Full replace: omitted moment/year are cleared. */
   editStory: (id: number, body: PostStoryBody) =>
