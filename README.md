@@ -68,6 +68,7 @@ curl localhost:8080/api/handles/admin/available                            # res
 | GET | `/api/profiles/{handle}/stories?before=&limit=` | yes | Profile grid tiles (cover = album art for now), keyset paged |
 | PUT / DELETE | `/api/profiles/{handle}/follow` | yes | Follow / unfollow (idempotent) → `{following, followers}` |
 | GET | `/api/profiles/{handle}/followers` · `/following` | yes | People lists, newest first (up to 100) |
+| GET | `/api/me/felt?cursor=&limit=` | yes | **Private**: stories you felt, newest first, as tiles. Opaque `nextCursor` |
 
 ## Auth
 

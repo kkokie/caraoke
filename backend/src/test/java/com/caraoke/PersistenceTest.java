@@ -179,6 +179,25 @@ class PersistenceTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    // ---- stories I felt (keyset on created_at + story_id) ----------------------
+
+    @Test
+    void feltPagesNewestFirstAndBreaksTimestampTies() {
+        long song = song(), author = user("sam"), me = user("ian");
+        long a = story(author, song), b = story(author, song), c = story(author, song);
+        // b and c share a timestamp: only story_id can order them, which is why the cursor carries it
+        jdbc.update("INSERT INTO resonances (user_id, story_id, created_at) VALUES (?, ?, now() - interval '2 hour')", me, a);
+        jdbc.update("INSERT INTO resonances (user_id, story_id, created_at) VALUES (?, ?, now() - interval '1 hour')", me, b);
+        jdbc.update("INSERT INTO resonances (user_id, story_id, created_at) VALUES (?, ?, now() - interval '1 hour')", me, c);
+
+        List<Resonance> page1 = resonances.findByIdUserIdOrderByCreatedAtDescIdStoryIdDesc(me, Limit.of(2));
+        Resonance last = page1.get(1);
+        List<Resonance> page2 = resonances.findFeltAfter(me, last.getCreatedAt(), last.getId().getStoryId(), Limit.of(5));
+
+        assertThat(page1.stream().map(r -> r.getId().getStoryId()).toList()).containsExactly(c, b);   // tie -> higher id first
+        assertThat(page2.stream().map(r -> r.getId().getStoryId()).toList()).containsExactly(a);
+    }
+
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----
 
     private long user(String handle) {

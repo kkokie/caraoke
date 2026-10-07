@@ -119,6 +119,12 @@ export type StoryTilePage = {
   nextCursor: number | null;
 };
 
+/** Your private "Felt" grid. nextCursor is opaque. */
+export type FeltTilePage = {
+  items: StoryTile[];
+  nextCursor: string | null;
+};
+
 export type ProfileView = {
   user: PublicProfile;
   stats: { stories: number; felt: number };
@@ -189,6 +195,9 @@ export const api = {
   getFollowers: (handle: string) => request<Author[]>(`/api/profiles/${encodeURIComponent(handle)}/followers`),
 
   getFollowing: (handle: string) => request<Author[]>(`/api/profiles/${encodeURIComponent(handle)}/following`),
+
+  getMyFelt: (cursor?: string | null) =>
+    request<FeltTilePage>(`/api/me/felt${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`),
 
   getProfileStories: (handle: string, before?: number | null) =>
     request<StoryTilePage>(`/api/profiles/${encodeURIComponent(handle)}/stories${before ? `?before=${before}` : ''}`),

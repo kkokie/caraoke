@@ -63,6 +63,21 @@ public class ResonanceService {
                 .toList();
     }
 
+    /** One page of the stories a user felt (story ids, newest resonance first) + the next cursor. */
+    public record FeltPage(List<Long> storyIds, String nextCursor) { }
+
+    @Transactional(readOnly = true)
+    public FeltPage feltBy(long userId, String rawCursor, int size) {
+        FeltCursor cursor = FeltCursor.decode(rawCursor);
+        List<Resonance> rows = cursor == null
+                ? resonances.findByIdUserIdOrderByCreatedAtDescIdStoryIdDesc(userId, Limit.of(size + 1))
+                : resonances.findFeltAfter(userId, cursor.createdAt(), cursor.storyId(), Limit.of(size + 1));
+        boolean hasMore = rows.size() > size;
+        List<Resonance> page = hasMore ? rows.subList(0, size) : rows;
+        String next = hasMore ? FeltCursor.of(page.get(page.size() - 1)).encode() : null;
+        return new FeltPage(page.stream().map(r -> r.getId().getStoryId()).toList(), next);
+    }
+
     private Map<Long, Long> countsFor(Collection<Long> storyIds) {
         return resonances.countByStoryIds(storyIds).stream()
                 .collect(Collectors.toMap(ResonanceRepository.StoryCount::getStoryId, ResonanceRepository.StoryCount::getTotal));

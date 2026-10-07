@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,6 +36,18 @@ public interface ResonanceRepository extends JpaRepository<Resonance, ResonanceI
     List<Long> findStoryIdsResonatedBy(@Param("userId") long userId, @Param("storyIds") Collection<Long> storyIds);
 
     List<Resonance> findByIdStoryIdOrderByCreatedAtDesc(long storyId, Limit limit);
+
+    /** First page of what a user felt, newest first. Backed by idx_resonances_user_recent. */
+    List<Resonance> findByIdUserIdOrderByCreatedAtDescIdStoryIdDesc(long userId, Limit limit);
+
+    /** Next page: strictly after the (createdAt, storyId) cursor in newest-first order. */
+    @Query("select r from Resonance r where r.id.userId = :userId "
+         + "and (r.createdAt < :cursorTime or (r.createdAt = :cursorTime and r.id.storyId < :cursorStory)) "
+         + "order by r.createdAt desc, r.id.storyId desc")
+    List<Resonance> findFeltAfter(@Param("userId") long userId,
+                                  @Param("cursorTime") Instant cursorTime,
+                                  @Param("cursorStory") long cursorStory,
+                                  Limit limit);
 
     interface StoryCount {
         Long getStoryId();
