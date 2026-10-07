@@ -5,16 +5,21 @@ import com.caraoke.media.MediaCleanup;
 import com.caraoke.media.MediaStorage;
 import com.caraoke.user.UserDtos.*;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class UserService {
+
+    static final int SEARCH_LIMIT = 20;
 
     private final UserRepository users;
     private final MediaStorage media;
@@ -103,6 +108,29 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<Long> findUserId(String authUid) {
         return users.findByAuthUid(authUid).map(User::getId);
+    }
+
+    /**
+     * Find people by @handle (starts with) or name (contains). LIKE wildcards in the query are
+     * escaped, so "%" can't list everyone; queries under 2 characters return nothing, which makes
+     * scraping the directory one letter at a time unrewarding.
+     */
+    @Transactional(readOnly = true)
+    public List<Author> searchPeople(String rawQuery) {
+        String q = rawQuery == null ? "" : rawQuery.strip().toLowerCase(Locale.ROOT);
+        if (q.startsWith("@")) q = q.substring(1);
+        if (q.length() < 2) return List.of();
+        String handle = q.replaceAll("[^a-z0-9_]", "");
+        // '#' can't appear in a handle, so a query with no handle characters matches names only
+        String handlePrefix = handle.isEmpty() ? "#" : likeEscape(handle);
+        return users.search(handlePrefix, likeEscape(q), Limit.of(SEARCH_LIMIT)).stream()
+                .map(u -> Author.of(u, media))
+                .toList();
+    }
+
+    /** Postgres LIKE escapes with a backslash by default. */
+    static String likeEscape(String s) {
+        return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     /** Our internal user id for a public @handle. */

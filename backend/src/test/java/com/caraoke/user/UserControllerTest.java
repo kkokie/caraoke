@@ -13,6 +13,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -93,5 +94,15 @@ class UserControllerTest {
                         .header("X-Dev-User", "uid-123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.avatarUrl").value("/media/avatars/1/x.png"));
+    }
+
+    @Test
+    void peopleSearchNeedsSignInAndReturnsAuthors() throws Exception {
+        mvc.perform(get("/api/search/people").param("q", "maya")).andExpect(status().isUnauthorized());
+
+        when(service.searchPeople("maya")).thenReturn(List.of(new Author("maya_k", "Maya", null)));
+        mvc.perform(get("/api/search/people").param("q", "maya").header("X-Dev-User", "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].handle").value("maya_k"));
     }
 }
