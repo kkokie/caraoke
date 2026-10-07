@@ -52,11 +52,12 @@ class StoryServiceTest {
     @Mock SongService songs;
     @Mock UserService users;
     @Mock ResonanceService resonances;
+    @Mock DailyShareLimit dailyLimit;
     StoryService service;
 
     @BeforeEach
     void setUp() {
-        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances));
+        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances), dailyLimit);
     }
 
     // ---- post ---------------------------------------------------------------
@@ -213,6 +214,61 @@ class StoryServiceTest {
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
 
         assertStatus(() -> service.get("uid-ian", 20L), 404);
+    }
+
+    // ---- share flow: lyric line, paper, one a day -------------------------
+
+    @Test
+    void postKeepsTheLyricLineAndPaper() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        when(stories.save(any(Story.class))).thenAnswer(inv -> withId(inv.getArgument(0), 101L));
+        when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
+
+        StoryView view = service.post("uid-ian", SONG_ID,
+                new StoryInput("dad's truck", 134, 2009, "“we were static on the radio”", "dusk"));
+
+        assertThat(view.lyricQuote()).isEqualTo("we were static on the radio");
+        assertThat(view.paper()).isEqualTo("dusk");
+    }
+
+    @Test
+    void paperDefaultsToCream() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        when(stories.save(any(Story.class))).thenAnswer(inv -> withId(inv.getArgument(0), 102L));
+        when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
+
+        assertThat(service.post("uid-ian", SONG_ID, new StoryInput("hi", null, null)).paper()).isEqualTo("cream");
+    }
+
+    @Test
+    void secondStoryTheSameDayIsRefusedAndNothingIsSaved() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.TOO_MANY_REQUESTS, "tomorrow")).when(dailyLimit).check(IAN);
+
+        assertStatus(() -> service.post("uid-ian", SONG_ID, new StoryInput("again", null, null)), 429);
+        verify(stories, never()).save(any());
+    }
+
+    @Test
+    void editsDontCountTowardTheDailyStory() {
+        Story mine = story(30L, IAN);
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(stories.findById(30L)).thenReturn(Optional.of(mine));
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
+
+        StoryView view = service.edit("uid-ian", 30L, new StoryInput("rewritten", null, null, "a line", null));
+
+        verifyNoInteractions(dailyLimit);
+        assertThat(view.lyricQuote()).isEqualTo("a line");
+        assertThat(view.paper()).isEqualTo("cream");             // null paper keeps the current one
     }
 
     // ---- helpers ------------------------------------------------------------

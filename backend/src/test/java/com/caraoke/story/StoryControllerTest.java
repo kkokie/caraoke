@@ -38,6 +38,7 @@ class StoryControllerTest {
 
     private static final StoryView STORY = new StoryView(
             100L, 7L, new Author("ian", "Ian", null), "senior year road trip", 134, 2009,
+            "we were static on the radio", "dusk",
             Instant.parse("2026-10-02T17:00:00Z"), null, true, 3L, false);
 
     @Autowired MockMvc mvc;
@@ -105,5 +106,26 @@ class StoryControllerTest {
                         .content("{\"body\":\"new words\",\"momentSec\":null,\"yearOfMemory\":2010}"))
                 .andExpect(status().isOk());
         verify(service).edit(eq("u1"), eq(100L), any(StoryInput.class));
+    }
+
+    @Test
+    void quotaSaysWhenYouCanShareNext() throws Exception {
+        when(service.quota("u1")).thenReturn(
+                new com.caraoke.story.StoryDtos.ShareQuota(false, Instant.parse("2026-10-08T20:00:00Z")));
+
+        mvc.perform(get("/api/stories/quota").header(USER, "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.canShare").value(false))
+                .andExpect(jsonPath("$.nextShareAt").value("2026-10-08T20:00:00Z"));
+    }
+
+    @Test
+    void storiesCarryTheirLyricLineAndPaper() throws Exception {
+        when(service.get("u1", 100L)).thenReturn(STORY);
+
+        mvc.perform(get("/api/stories/100").header(USER, "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lyricQuote").value("we were static on the radio"))
+                .andExpect(jsonPath("$.paper").value("dusk"));
     }
 }

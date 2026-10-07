@@ -152,6 +152,30 @@ class PersistenceTest {
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
+    @Test
+    void lyricLineAndPaperRoundTripAndUnknownPapersAreRejected() {
+        long s = story(user("ian"), song());
+        jdbc.update("UPDATE stories SET lyric_quote = ?, paper = 'SAGE' WHERE id = ?", "a line I felt", s);
+
+        Story found = stories.findById(s).orElseThrow();
+        assertThat(found.getLyricQuote()).isEqualTo("a line I felt");
+        assertThat(found.getPaper()).isEqualTo(com.caraoke.story.Paper.SAGE);
+        assertThatThrownBy(() -> jdbc.update("UPDATE stories SET paper = 'NEON' WHERE id = ?", s))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void latestStoryPerAuthorIsFoundForTheDailyLimit() {
+        long ian = user("ian"), song = song();
+        long older = story(ian, song);
+        long newer = story(ian, song);
+        jdbc.update("UPDATE stories SET created_at = now() - interval '2 days' WHERE id = ?", older);
+
+        assertThat(stories.findFirstByUserIdOrderByCreatedAtDesc(ian)).get()
+                .extracting(Story::getId).isEqualTo(newer);
+        assertThat(stories.findFirstByUserIdOrderByCreatedAtDesc(user("sam"))).isEmpty();
+    }
+
     // ---- follows ------------------------------------------------------------
 
     @Test

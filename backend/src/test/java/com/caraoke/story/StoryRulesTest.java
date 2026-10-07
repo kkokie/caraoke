@@ -53,4 +53,25 @@ class StoryRulesTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode().value()).isEqualTo(400));
     }
+
+    @Test
+    void lyricIsOptionalDropsTypedQuotesAndStaysShort() {
+        assertThat(StoryRules.lyric(null)).isNull();
+        assertThat(StoryRules.lyric("   ")).isNull();
+        assertThat(StoryRules.lyric("“we were static on the radio”")).isEqualTo("we were static on the radio");
+        assertThat(StoryRules.lyric("\"don't stop\"")).isEqualTo("don't stop");
+        assertThat(StoryRules.lyric("x".repeat(StoryRules.MAX_LYRIC))).hasSize(StoryRules.MAX_LYRIC);
+        assertBadRequest(() -> StoryRules.lyric("x".repeat(StoryRules.MAX_LYRIC + 1)));
+    }
+
+    @Test
+    void freePapersParsePlusPapersWaitForCaraokePlus() {
+        assertThat(StoryRules.paper(null)).isNull();
+        assertThat(StoryRules.paper("dusk")).isEqualTo(Paper.DUSK);
+        assertThat(StoryRules.paper(" INK ")).isEqualTo(Paper.INK);
+        assertBadRequest(() -> StoryRules.paper("neon"));
+        assertThatThrownBy(() -> StoryRules.paper("rose"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode().value()).isEqualTo(403));
+    }
 }

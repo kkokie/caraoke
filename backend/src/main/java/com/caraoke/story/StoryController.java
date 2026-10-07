@@ -1,5 +1,6 @@
 package com.caraoke.story;
 
+import com.caraoke.story.StoryDtos.ShareQuota;
 import com.caraoke.story.StoryDtos.StoryInput;
 import com.caraoke.story.StoryDtos.StoryPage;
 import com.caraoke.story.StoryDtos.StoryView;
@@ -31,6 +32,12 @@ public class StoryController {
                           @RequestParam(name = "before", required = false) Long before,
                           @RequestParam(name = "limit", defaultValue = "20") int limit) {
         return service.feed(auth.getName(), songId, before, limit);
+    }
+
+    /** One story a day: can I share now, and if not, when? */
+    @GetMapping("/stories/quota")
+    public ShareQuota quota(Authentication auth) {
+        return service.quota(auth.getName());
     }
 
     @GetMapping("/stories/{id}")

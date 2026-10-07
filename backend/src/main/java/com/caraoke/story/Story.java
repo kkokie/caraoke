@@ -31,6 +31,13 @@ public class Story {
     @Column(name = "year_of_memory")
     private Short yearOfMemory;          // SMALLINT in the DB
 
+    @Column(name = "lyric_quote", length = StoryRules.MAX_LYRIC)
+    private String lyricQuote;           // the line they felt, typed from memory
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Paper paper = Paper.CREAM;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private StoryStatus status = StoryStatus.VISIBLE;
@@ -49,6 +56,12 @@ public class Story {
         this.body = body;
         this.momentSec = momentSec;
         this.yearOfMemory = yearOfMemory;
+    }
+
+    /** The share flow's look: the lyric line and the card's paper. Null paper keeps the current one. */
+    void style(String lyricQuote, Paper paper) {
+        this.lyricQuote = lyricQuote;
+        if (paper != null) this.paper = paper;
     }
 
     @PrePersist
@@ -78,6 +91,8 @@ public class Story {
     public String getBody() { return body; }
     public Integer getMomentSec() { return momentSec; }
     public Short getYearOfMemory() { return yearOfMemory; }
+    public String getLyricQuote() { return lyricQuote; }
+    public Paper getPaper() { return paper; }
     public StoryStatus getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getEditedAt() { return editedAt; }
