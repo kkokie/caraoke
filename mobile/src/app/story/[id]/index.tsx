@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Song, Story } from '@/api/client';
 import { Screen } from '@/components/Screen';
@@ -6,7 +6,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { Artwork } from '@/features/songs/Artwork';
 import { StoryCard } from '@/features/stories/StoryCard';
 import { useStoryWithSong } from '@/features/stories/useStoryWithSong';
-import { colors, radius, space, type } from '@/theme';
+import { makeStyles, radius, space } from '@/theme';
 
 /** One story on its own page (opened from a profile tile). */
 export default function StoryScreen() {
@@ -18,6 +18,7 @@ export default function StoryScreen() {
 }
 
 function StoryPage({ story, song }: { story: Story; song: Song }) {
+  const styles = useStyles();
   const openSong = () => router.push({ pathname: '/song/[id]', params: { id: String(song.id) } });
 
   return (
@@ -36,11 +37,11 @@ function StoryPage({ story, song }: { story: Story; song: Song }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   song: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   pressed: { opacity: 0.7 },
   songText: { flex: 1, gap: 2 },
   title: { ...type.body, fontWeight: '700' },
   artist: { ...type.hint, color: colors.textMuted },
   link: { ...type.hint, color: colors.accent, marginTop: space.xs },
-});
+}));

@@ -1,6 +1,6 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { Button } from '@/components/Button';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 import { StoryCard } from './StoryCard';
 import { useStoryFeed } from './useStoryFeed';
 
@@ -9,6 +9,8 @@ import { useStoryFeed } from './useStoryFeed';
  * (a plain map, not a nested FlatList), which is fine at v1 page sizes.
  */
 export function StoryFeed({ songId }: { songId: number }) {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const feed = useStoryFeed(songId);
 
   if (feed.status === 'loading') return <ActivityIndicator color={colors.accent} style={styles.spacer} />;
@@ -36,10 +38,10 @@ export function StoryFeed({ songId }: { songId: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   list: { gap: space.md },
   spacer: { marginVertical: space.lg },
   center: { textAlign: 'center' },
   message: { gap: space.md, alignItems: 'center', marginVertical: space.lg },
   error: { color: colors.danger, textAlign: 'center' },
-});
+}));

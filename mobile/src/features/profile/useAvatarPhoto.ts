@@ -8,6 +8,7 @@ import { pickAvatarImage } from './pickAvatarImage';
 export function useAvatarPhoto(profile: PublicProfile) {
   const session = useSession();
   const [busy, setBusy] = useState(false);
+  const [viewing, setViewing] = useState(false);
 
   async function run(action: () => Promise<PublicProfile | null>) {
     setBusy(true);
@@ -32,20 +33,22 @@ export function useAvatarPhoto(profile: PublicProfile) {
   function openMenu() {
     if (busy) return;
     if (!profile.avatarUrl) return choose();
-    const options = ['Choose new photo', 'Remove photo', 'Cancel'];
+    const view = () => setViewing(true);
+    const options = ['View photo', 'Choose new photo', 'Remove photo', 'Cancel'];
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
-        { options, destructiveButtonIndex: 1, cancelButtonIndex: 2 },
-        (i) => (i === 0 ? choose() : i === 1 ? remove() : undefined),
+        { options, destructiveButtonIndex: 2, cancelButtonIndex: 3 },
+        (i) => [view, choose, remove][i]?.(),
       );
     } else {
       Alert.alert('Profile photo', undefined, [
-        { text: options[0], onPress: choose },
-        { text: options[1], style: 'destructive', onPress: remove },
-        { text: options[2], style: 'cancel' },
+        { text: options[0], onPress: view },
+        { text: options[1], onPress: choose },
+        { text: options[2], style: 'destructive', onPress: remove },
+        { text: options[3], style: 'cancel' },
       ]);
     }
   }
 
-  return { busy, openMenu, hasPhoto: !!profile.avatarUrl };
+  return { busy, openMenu, hasPhoto: !!profile.avatarUrl, viewing, closeViewer: () => setViewing(false) };
 }

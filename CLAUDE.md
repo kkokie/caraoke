@@ -73,9 +73,11 @@ Car constraints (checked Oct 2026), which shape the design:
 - Mobile layout (same feature-module idea as the backend):
   - `src/app/`: routes only (Expo Router). Screens stay thin and visual.
   - `src/features/<feature>/`: hooks and components for one feature (state + logic live in hooks).
-  - `src/components/`: shared UI primitives. `src/api/`: API client. `src/lib/`: pure helpers. `src/theme.ts`: design tokens.
+  - `src/components/`: shared UI primitives (incl. `icons.tsx`, SVG via react-native-svg). `src/api/`: API client. `src/lib/`: pure helpers. `src/theme/`: palettes, fonts, type scale.
+  - **Theming:** the app follows the phone's light/dark setting. Never import colors directly: style with `const useStyles = makeStyles(({ colors, type }) => ({ ... }))` and call `useStyles()` in the component; use `useTheme()` for colors in props (icons, spinners). No hex values outside `src/theme/` (dark scrims over photos excepted).
+  - **Type:** serif (Instrument Serif) for titles and story text (`type.title`, `type.story`, `type.lyric`), mono (IBM Plex Mono) for times, years, counts and labels (`type.mono`, `type.label`), system font for everything else. Custom fonts have no bold: never add `fontWeight` to a serif/mono style. Import font weights by subpath (`@expo-google-fonts/<family>/<weight>`) so only used files are bundled.
   - Navigation is driven by session state via `Stack.Protected` in `src/app/_layout.tsx`, not by screens pushing each other.
-  - Bottom tabs live in `src/app/(tabs)/` (Home, Profile) using `expo-router/js-tabs`; everything else is a stack screen pushed over them.
+  - Bottom tabs live in `src/app/(tabs)/`: **Discover · ＋ · You** (`expo-router/js-tabs`). The center ＋ is a custom tab button that starts sharing; everything else is a stack screen pushed over the tabs, with a back button top-left.
 
 ## Roadmap
 

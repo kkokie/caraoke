@@ -1,12 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { useSession } from '@/features/session/useSession';
-import { space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 
 // Home tab. Becomes a real feed later; for now the front door into songs.
 export default function HomeScreen() {
+  const styles = useStyles();
+  const { type } = useTheme();
   const session = useSession();
   if (session.status !== 'ready') return null;   // guard in _layout redirects; this just narrows the type
 
@@ -24,6 +26,6 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   header: { gap: space.sm, marginTop: space.xl },
-});
+}));

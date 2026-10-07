@@ -1,10 +1,11 @@
 import { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, space } from '@/theme';
+import { makeStyles, space } from '@/theme';
 
 /** Page wrapper: safe area, keyboard avoidance, and consistent padding. */
 export function Screen({ children }: { children: ReactNode }) {
+  const styles = useStyles();
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -16,8 +17,8 @@ export function Screen({ children }: { children: ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   safe: { flex: 1, backgroundColor: colors.bg },
   flex: { flex: 1 },
   content: { flexGrow: 1, padding: space.lg, gap: space.lg },
-});
+}));
