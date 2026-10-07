@@ -15,6 +15,16 @@ Out of scope for v1: DMs, following, playlists.
 
 **Public profiles:** every user has a unique public `@handle` to keep the app authentic and discourage bots and spam.
 
+## Platforms
+
+Required targets: **iOS + Android phones** (one Expo codebase; test both), **Apple CarPlay**, and **Android Auto** (plus Android Automotive OS where it comes free).
+
+Car constraints (checked Oct 2026), which shape the design:
+- Neither car platform has a "social / text feed" category. CarPlay entitlements: Audio, Communication, EV Charging, Navigation, Parking, Quick Food Ordering. Android Auto: Media (audio), Messaging, Navigation, POI, IoT, Weather (video/games/browsers are parked-only).
+- So **in the car, caraoke is an audio experience** (CarPlay *Audio* / Android Auto *Media*): stories are **heard, not read**. Plan: text-to-speech of stories now, and optionally recorded voice stories later, browsed through the cars' built-in list/now-playing templates. No reading or typing while driving; posting from the car, if ever, is voice-only.
+- CarPlay needs a paid Apple Developer account plus a **CarPlay Audio entitlement request that Apple reviews** (approval isn't guaranteed). Both car integrations are native code, so they need a **development build, not Expo Go**, wired in through config plugins (never hand-edit `ios/` or `android/`).
+- Design for it now: keep stories short and speakable, and plan a per-song "story queue" API the car player can stream through.
+
 ## Stack
 
 | Layer | Choice |
@@ -63,8 +73,28 @@ Out of scope for v1: DMs, following, playlists.
 
 ## Roadmap
 
-- **Phase 0, Foundation:** API skeleton, schema, dev auth, Expo shell. *(done)* Remaining: Firebase Auth, Railway deploy.
-- **Phase 1, Core loop:** song search, song page, post a story (moment + year), per-song feed, resonate.
-- **Phase 2, Safety + launch:** report, block, account deletion (API done), moderation queue, legal pages, store submission.
-- **Phase 3, Connection:** "stories like yours" via embeddings (pgvector).
-- **Phase 4, Growth:** shareable story cards for IG/TikTok.
+Long-term goals: a **sustainable business** (subscription first, partnerships later), **CarPlay / Android Auto "story radio"**, and Android parity. Keep these in mind when making design calls.
+
+| Phase | Theme | Scope | Status |
+|---|---|---|---|
+| 0 | Foundation | API skeleton, schema, dev auth, Expo shell, CI | done |
+| 1 | Core loop | Song search, song page, stories (moment + year), feed, resonance | done |
+| **2** | **Profile + safety** | Instagram-style profile (grid; tile = story photo else album cover), view others' profiles, edit/delete stories, edit profile, delete account; photos (`story_media` + object storage); report, block, moderation queue; legal pages | **in progress** |
+| 3 | Launch platform | Apple Developer account, EAS dev build, Firebase Auth (Apple + Google), Railway deploy, TestFlight beta, basic product analytics (weekly posters, resonances per story) | |
+| 4 | Monetize | RevenueCat + **caraoke+** subscription; **Story Radio** car mode as the flagship premium feature; Apple Music affiliate links | |
+| 5 | Growth | Instagram Stories share cards, yearly "your life in songs" recap | |
+| 6 | Connection + B2B | "Stories like yours" (pgvector), artist pages, label/artist partnerships and fan insights | |
+
+### Monetization principles
+- **Never paywall the network:** posting, reading, and resonating are always free.
+- **caraoke+ (subscription, ~$3.99/mo or ~$29.99/yr):** Story Radio car mode, extra photos per story, music memoir/timeline + yearly recap, insights, profile themes. Store fee is 15% under the Apple/Google small-business programs.
+- **Apple Music affiliate token** on "Listen on Apple Music" links (Apple Services Performance Partners pays on qualifying Apple Music memberships).
+- **Partnerships** (Apple Music, Spotify, labels, artists) once there's traction: our unique asset is *why* people love a song, at which second, and from which year of their life.
+- **No ads** early: they need scale and clash with the intimate tone.
+
+### Story Radio (car + premium)
+A per-song audio experience: after a song plays, a **host voice reads the stories** people shared about it (TTS first, recorded voice stories later). It is the CarPlay *Audio* / Android Auto *Media* experience and the flagship caraoke+ feature. Design now: stories stay short and speakable; plan a per-song "story queue" API.
+
+### Data-model decisions made ahead of time
+- Photos live in **`story_media`** (`story_id`, `position`, `storage_key`, `width`, `height`): many per story, ordered; the DB stores object-storage keys only, never blobs. Profile tile = first photo, else `songs.album_art_url`.
+- Stories get **`edited_at`** for edits.
