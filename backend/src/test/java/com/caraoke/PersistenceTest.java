@@ -1,5 +1,7 @@
 package com.caraoke;
 
+import com.caraoke.follow.Follow;
+import com.caraoke.follow.FollowRepository;
 import com.caraoke.resonance.Resonance;
 import com.caraoke.resonance.ResonanceRepository;
 import com.caraoke.story.Story;
@@ -42,6 +44,7 @@ class PersistenceTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired ResonanceRepository resonances;
     @Autowired StoryRepository stories;
+    @Autowired FollowRepository follows;
 
     // ---- resonances ---------------------------------------------------------
 
@@ -146,6 +149,33 @@ class PersistenceTest {
         assertThat(stories.findById(longOne).orElseThrow().getBody()).hasSize(10_000);
         assertThatThrownBy(() -> jdbc.update(
                 "INSERT INTO stories (user_id, song_id, body) VALUES (?, ?, ?)", ian, song, "x".repeat(10_001)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    // ---- follows ------------------------------------------------------------
+
+    @Test
+    void followGraphIsIdempotentAndCountsBothWays() {
+        long ian = user("ian"), sam = user("sam"), jo = user("joe");
+
+        assertThat(follows.insertIfAbsent(ian, sam)).isEqualTo(1);
+        assertThat(follows.insertIfAbsent(ian, sam)).isEqualTo(0);       // double tap
+        jdbc.update("INSERT INTO follows (follower_id, followee_id, created_at) VALUES (?, ?, now() - interval '1 hour')", jo, sam);
+        follows.insertIfAbsent(sam, jo);
+
+        assertThat(follows.countByIdFolloweeId(sam)).isEqualTo(2);       // ian + jo follow sam
+        assertThat(follows.countByIdFollowerId(sam)).isEqualTo(1);       // sam follows jo
+        assertThat(follows.findByIdFolloweeIdOrderByCreatedAtDesc(sam, Limit.of(10)).stream()
+                .map(Follow::getId).map(id -> id.getFollowerId()).toList())
+                .containsExactly(ian, jo);                               // newest first
+        assertThat(follows.deleteOne(ian, sam)).isEqualTo(1);
+        assertThat(follows.countByIdFolloweeId(sam)).isEqualTo(1);
+    }
+
+    @Test
+    void cantFollowYourselfEvenAtTheDatabase() {
+        long ian = user("ian");
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO follows (follower_id, followee_id) VALUES (?, ?)", ian, ian))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

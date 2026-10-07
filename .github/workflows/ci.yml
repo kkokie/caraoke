@@ -25,7 +25,25 @@ jobs:
           java-version: '21'
           cache: maven
       - name: mvn test
-        run: mvn -B -ntp test
+        run: |
+          set -o pipefail
+          mvn -B -ntp test 2>&1 | tee mvn.log
+      # On failure, turn compile errors and failing tests into annotations: they show on the
+      # PR/commit and are readable through the GitHub API (raw logs often aren't).
+      - name: Explain failures
+        if: failure()
+        run: |
+          grep -E '^\[ERROR\] .*\.java:\[[0-9]+' mvn.log | head -20 | while IFS= read -r line; do
+            echo "::error title=Compile error::${line}"
+          done
+          for f in target/surefire-reports/*.txt; do
+            [ -f "$f" ] || continue
+            if grep -qE '<<< (FAILURE|ERROR)' "$f"; then
+              details=$(grep -E -A4 '<<< (FAILURE|ERROR)' "$f" | head -c 1800 | tr '\n' ' ')
+              echo "::error title=$(basename "$f" .txt)::${details}"
+            fi
+          done
+          grep -E 'APPLICATION FAILED TO START|Caused by:' -A2 mvn.log | head -c 1500 | tr '\n' ' ' | sed 's/^/::error title=Startup::/' || true
 
   mobile:
     name: App typecheck

@@ -2,6 +2,7 @@ package com.caraoke.profile;
 
 import com.caraoke.config.SecurityConfig;
 import com.caraoke.profile.ProfileDtos.ProfileView;
+import com.caraoke.profile.ProfileDtos.SocialView;
 import com.caraoke.story.StoryDtos.AuthorStats;
 import com.caraoke.story.StoryDtos.StoryTile;
 import com.caraoke.story.StoryDtos.StoryTilePage;
@@ -40,13 +41,15 @@ class ProfileControllerTest {
     @Test
     void profileHeader() throws Exception {
         PublicProfile sam = new PublicProfile("sam", "Sam", null, null, Instant.parse("2026-10-01T00:00:00Z"));
-        when(service.profile("u1", "sam")).thenReturn(new ProfileView(sam, new AuthorStats(3, 12), false));
+        when(service.profile("u1", "sam")).thenReturn(new ProfileView(sam, new AuthorStats(3, 12), new SocialView(40, 7, true), false));
 
         mvc.perform(get("/api/profiles/sam").header(USER, "u1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.handle").value("sam"))
                 .andExpect(jsonPath("$.stats.stories").value(3))
                 .andExpect(jsonPath("$.stats.felt").value(12))
+                .andExpect(jsonPath("$.social.followers").value(40))
+                .andExpect(jsonPath("$.social.followedByMe").value(true))
                 .andExpect(jsonPath("$.me").value(false));
     }
 
