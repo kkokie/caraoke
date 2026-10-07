@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, radius, space, type } from '@/theme';
+import { Text, TextInput, TextInputProps, View } from 'react-native';
+import { makeStyles, radius, space, useTheme } from '@/theme';
 
 type Props = TextInputProps & {
   label: string;
@@ -9,6 +9,8 @@ type Props = TextInputProps & {
 };
 
 export function TextField({ label, prefix, footer, style, ...input }: Props) {
+  const styles = useStyles();
+  const { colors, type, scheme } = useTheme();
   return (
     <View style={styles.wrap}>
       <Text style={type.label}>{label.toUpperCase()}</Text>
@@ -17,6 +19,7 @@ export function TextField({ label, prefix, footer, style, ...input }: Props) {
         <TextInput
           placeholderTextColor={colors.textMuted}
           selectionColor={colors.accent}
+          keyboardAppearance={scheme}
           style={[styles.input, style]}
           {...input}
         />
@@ -26,7 +29,7 @@ export function TextField({ label, prefix, footer, style, ...input }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   wrap: { gap: space.sm },
   box: {
     flexDirection: 'row',
@@ -39,4 +42,4 @@ const styles = StyleSheet.create({
   },
   prefix: { ...type.body, color: colors.textMuted, marginRight: 2 },
   input: { flex: 1, ...type.body, paddingVertical: 14 },
-});
+}));

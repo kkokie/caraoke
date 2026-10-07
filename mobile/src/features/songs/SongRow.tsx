@@ -1,12 +1,14 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SongSearchResult } from '@/api/client';
 import { formatDuration } from '@/lib/format';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 import { Artwork } from './Artwork';
 
 type Props = { song: SongSearchResult; loading: boolean; onPress: () => void };
 
 export function SongRow({ song, loading, onPress }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -27,10 +29,10 @@ export function SongRow({ song, loading, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm },
   pressed: { opacity: 0.6 },
   text: { flex: 1, gap: 2 },
   title: { ...type.body, fontWeight: '600' },
   sub: { ...type.hint, color: colors.textMuted },
-});
+}));

@@ -1,11 +1,13 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors, space, type } from '@/theme';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { makeStyles, space, useTheme } from '@/theme';
 import { Button } from './Button';
 
 type Props = { error?: string; onRetry?: () => void };
 
 /** Full-screen loading or "can't reach the API" state, shown before routing kicks in. */
 export function SplashState({ error, onRetry }: Props) {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   return (
     <View style={styles.wrap}>
       <Text style={styles.brand}>caraoke</Text>
@@ -22,9 +24,9 @@ export function SplashState({ error, onRetry }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   wrap: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg, gap: space.lg },
   brand: { ...type.title, color: colors.accent, letterSpacing: -0.5 },
   errorBox: { alignSelf: 'stretch', gap: space.md, alignItems: 'center' },
   detail: { color: colors.textMuted, textAlign: 'center' },
-});
+}));

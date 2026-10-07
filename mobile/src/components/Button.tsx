@@ -1,5 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, space } from '@/theme';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
+import { makeStyles, radius, space, useTheme } from '@/theme';
 
 type Props = {
   label: string;
@@ -10,6 +10,8 @@ type Props = {
 };
 
 export function Button({ label, onPress, disabled, loading, variant = 'primary' }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const isPrimary = variant === 'primary';
   const inactive = disabled || loading;
 
@@ -31,7 +33,7 @@ export function Button({ label, onPress, disabled, loading, variant = 'primary' 
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   base: { minHeight: 52, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
   primary: { backgroundColor: colors.accent },
   ghost: { borderWidth: 1, borderColor: colors.border },
@@ -40,4 +42,4 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, fontWeight: '600' },
   primaryLabel: { color: colors.accentText },
   ghostLabel: { color: colors.text },
-});
+}));

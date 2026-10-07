@@ -1,14 +1,16 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Song, Story } from '@/api/client';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
 import { Artwork } from '@/features/songs/Artwork';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 import { MAX_BODY, useComposeStory } from './useComposeStory';
 
 /** The write/edit form. Same fields and rules for a new story and an edit. */
 export function StoryForm({ song, existing }: { song: Song; existing?: Story }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   const form = useComposeStory(song, existing);
 
   return (
@@ -71,10 +73,11 @@ export function StoryForm({ song, existing }: { song: Song; existing?: Story }) 
 }
 
 function FieldHint({ error, hint }: { error?: string; hint: string }) {
+  const { colors, type } = useTheme();
   return <Text style={[type.hint, { color: error ? colors.danger : colors.textMuted }]}>{error ?? hint}</Text>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   songRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   songText: { flex: 1 },
   songTitle: { ...type.body, fontWeight: '600' },
@@ -85,4 +88,4 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
   footer: { marginTop: 'auto', gap: space.sm },
   error: { color: colors.danger, textAlign: 'center' },
-});
+}));

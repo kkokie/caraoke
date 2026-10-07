@@ -3,24 +3,29 @@ import { StatusBar } from 'expo-status-bar';
 import { SessionProvider } from '@/features/session/SessionProvider';
 import { useSession } from '@/features/session/useSession';
 import { SplashState } from '@/components/SplashState';
-import { colors } from '@/theme';
+import { useFonts } from 'expo-font';
+import { fontAssets, Palette, useTheme } from '@/theme';
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
   return (
     <SessionProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <StatusBar style="auto" />
+      {/* If fonts fail to load, carry on with system fonts rather than block the app */}
+      {fontsLoaded || fontError ? <RootNavigator /> : <SplashState />}
     </SessionProvider>
   );
 }
 
 /**
  * Routing is driven by session state, not by screens pushing each other:
- * no profile -> only /onboarding is reachable; profile -> only /home.
+ * no profile -> only /onboarding is reachable; profile -> only /discover.
  * Expo Router redirects automatically when a guard flips.
  */
 function RootNavigator() {
+  const { colors } = useTheme();
   const session = useSession();
+  const pushedScreen = pushedScreenOptions(colors);
 
   if (session.status === 'loading') return <SplashState />;
   if (session.status === 'error') return <SplashState error={session.message} onRetry={session.reload} />;
@@ -49,11 +54,13 @@ function RootNavigator() {
 }
 
 // Screens you navigate into get a minimal dark header with a back arrow
-const pushedScreen = {
-  headerShown: true,
-  headerStyle: { backgroundColor: colors.bg },
-  headerTintColor: colors.accent,
-  headerTitleStyle: { color: colors.text },
-  headerShadowVisible: false,
-  headerBackButtonDisplayMode: 'minimal' as const,
-};
+function pushedScreenOptions(colors: Palette) {
+  return {
+    headerShown: true,
+    headerStyle: { backgroundColor: colors.bg },
+    headerTintColor: colors.accent,
+    headerTitleStyle: { color: colors.text },
+    headerShadowVisible: false,
+    headerBackButtonDisplayMode: 'minimal' as const,
+  };
+}

@@ -1,11 +1,13 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { PublicProfile } from '@/api/client';
 import { Avatar } from '@/components/Avatar';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 import { useAvatarPhoto } from './useAvatarPhoto';
 
 /** Tappable profile photo at the top of Edit profile. */
 export function AvatarPicker({ profile }: { profile: PublicProfile }) {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const photo = useAvatarPhoto(profile);
 
   return (
@@ -23,7 +25,7 @@ export function AvatarPicker({ profile }: { profile: PublicProfile }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   wrap: { alignItems: 'center', gap: space.sm, paddingVertical: space.md },
   overlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -33,4 +35,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   link: { color: colors.accent, fontWeight: '600' },
-});
+}));

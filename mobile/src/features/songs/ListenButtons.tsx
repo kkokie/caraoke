@@ -1,10 +1,11 @@
-import { Alert, Linking, StyleSheet, View } from 'react-native';
+import { Alert, Linking, View } from 'react-native';
 import { ListenLinks } from '@/api/client';
 import { Button } from '@/components/Button';
-import { space } from '@/theme';
+import { makeStyles, space } from '@/theme';
 
 /** "Listen on…" buttons. We never play audio ourselves; we hand off to the user's app. */
 export function ListenButtons({ links }: { links: ListenLinks }) {
+  const styles = useStyles();
   const options = [
     { label: 'Apple Music', url: links.appleMusic },
     { label: 'Spotify', url: links.spotify },
@@ -30,7 +31,7 @@ async function openUrl(url: string) {
   }
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   cell: { flexGrow: 1, flexBasis: '30%' },
-});
+}));

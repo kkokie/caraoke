@@ -1,10 +1,11 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { StoryTile as Tile } from '@/api/client';
-import { colors } from '@/theme';
+import { makeStyles } from '@/theme';
 
 /** One square. The image is the album cover today; the story's first photo once photos land. */
 export function StoryTile({ tile }: { tile: Tile }) {
+  const styles = useStyles();
   const open = () => router.push({ pathname: '/story/[id]', params: { id: String(tile.storyId) } });
   return (
     <Pressable
@@ -24,7 +25,7 @@ export function StoryTile({ tile }: { tile: Tile }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   tile: { flex: 1 / 3, aspectRatio: 1, padding: 1 },
   pressed: { opacity: 0.7 },
   image: { flex: 1, backgroundColor: colors.surface },
@@ -40,4 +41,4 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(20,17,15,0.75)',
   },
   badgeText: { color: colors.accent, fontSize: 11, fontWeight: '700' },
-});
+}));

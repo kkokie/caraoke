@@ -1,9 +1,9 @@
 import { ReactNode, useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 import { GridTab, GridTabs } from './GridTabs';
 import { ProfileHeader } from './ProfileHeader';
 import { StoryTile } from './StoryTile';
@@ -16,6 +16,8 @@ import { useProfile } from './useProfile';
  * shows the stories you resonated with (private to you).
  */
 export function ProfileScreen({ handle, edges = ['left', 'right'] }: { handle: string; edges?: ('top' | 'left' | 'right' | 'bottom')[] }) {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   const p = useProfile(handle);
   const felt = useFeltTiles();
   const [tab, setTab] = useState<GridTab>('stories');
@@ -70,6 +72,8 @@ export function ProfileScreen({ handle, edges = ['left', 'right'] }: { handle: s
 }
 
 function EmptyGrid({ mine }: { mine: boolean }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   return (
     <View style={styles.empty}>
       <Text style={[type.subtitle, styles.center]}>
@@ -81,6 +85,8 @@ function EmptyGrid({ mine }: { mine: boolean }) {
 }
 
 function FeltEmpty({ loading }: { loading: boolean }) {
+  const styles = useStyles();
+  const { colors, type } = useTheme();
   if (loading) return <ActivityIndicator color={colors.accent} style={styles.footer} />;
   return (
     <View style={styles.empty}>
@@ -92,10 +98,11 @@ function FeltEmpty({ loading }: { loading: boolean }) {
 }
 
 function Centered({ children }: { children: ReactNode }) {
+  const styles = useStyles();
   return <View style={styles.centered}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { paddingHorizontal: space.lg, paddingTop: space.md },
   empty: { padding: space.lg, gap: space.md },
@@ -103,4 +110,4 @@ const styles = StyleSheet.create({
   footer: { marginVertical: space.lg },
   centered: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg, gap: space.md },
   error: { color: colors.danger, textAlign: 'center' },
-});
+}));

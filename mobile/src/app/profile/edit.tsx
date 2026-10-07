@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { PublicProfile } from '@/api/client';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { AvatarPicker } from '@/features/profile/AvatarPicker';
 import { MAX_BIO, useEditProfile } from '@/features/profile/useEditProfile';
 import { useSession } from '@/features/session/useSession';
-import { colors, space, type } from '@/theme';
+import { makeStyles, space, useTheme } from '@/theme';
 
 export default function EditProfileScreen() {
   const session = useSession();
@@ -15,6 +15,8 @@ export default function EditProfileScreen() {
 }
 
 function EditProfileForm({ profile }: { profile: PublicProfile }) {
+  const styles = useStyles();
+  const { type } = useTheme();
   const form = useEditProfile(profile);
 
   return (
@@ -49,10 +51,10 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(({ colors, type }) => ({
   bio: { minHeight: 88, textAlignVertical: 'top' },
   counter: { color: colors.textMuted, textAlign: 'right' },
   muted: { color: colors.textMuted },
   error: { color: colors.danger, textAlign: 'center' },
   danger: { marginTop: 'auto', gap: space.sm, paddingTop: space.xl },
-});
+}));
