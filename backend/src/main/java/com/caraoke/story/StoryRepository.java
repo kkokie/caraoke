@@ -18,7 +18,7 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     List<Story> findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
             long userId, StoryStatus status, long beforeId, Limit limit);
 
-    /** Your most recent story, any status (for the one-a-day rule). Backed by idx_stories_user_created. */
+    /** Your most recent story, any status (for the one-a-day rule). Backed by idx_stories_user_created (V1). */
     Optional<Story> findFirstByUserIdOrderByCreatedAtDesc(long userId);
 
     long countByUserIdAndStatus(long userId, StoryStatus status);

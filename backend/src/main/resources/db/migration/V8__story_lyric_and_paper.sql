@@ -5,5 +5,4 @@ ALTER TABLE stories ADD COLUMN paper VARCHAR(16) NOT NULL DEFAULT 'CREAM';
 ALTER TABLE stories ADD CONSTRAINT stories_paper_known
     CHECK (paper IN ('CREAM', 'DUSK', 'SAGE', 'INK', 'ROSE', 'TAPE'));
 
--- One story a day: "when did this person last share?" is a lookup on (user_id, created_at).
-CREATE INDEX idx_stories_user_created ON stories (user_id, created_at DESC);
+-- One story a day ("when did this person last share?") uses idx_stories_user_created from V1.
