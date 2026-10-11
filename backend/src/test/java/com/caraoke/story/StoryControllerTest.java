@@ -128,4 +128,14 @@ class StoryControllerTest {
                 .andExpect(jsonPath("$.lyricQuote").value("we were static on the radio"))
                 .andExpect(jsonPath("$.paper").value("dusk"));
     }
+
+    @Test
+    void momentsAreSlotsWithCounts() throws Exception {
+        when(service.moments(7L)).thenReturn(List.of(new com.caraoke.story.StoryDtos.MomentCount(130, 4)));
+
+        mvc.perform(get("/api/songs/7/moments").header(USER, "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].sec").value(130))
+                .andExpect(jsonPath("$[0].stories").value(4));
+    }
 }

@@ -40,6 +40,12 @@ public class StoryController {
         return service.quota(auth.getName());
     }
 
+    /** Dots for the moments timeline. */
+    @GetMapping("/songs/{songId}/moments")
+    public java.util.List<StoryDtos.MomentCount> moments(@PathVariable long songId) {
+        return service.moments(songId);
+    }
+
     @GetMapping("/stories/{id}")
     public StoryView get(Authentication auth, @PathVariable long id) {
         return service.get(auth.getName(), id);

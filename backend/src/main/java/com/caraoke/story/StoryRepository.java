@@ -18,6 +18,19 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     List<Story> findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
             long songId, StoryStatus status, long beforeId, Collection<Long> hiddenAuthors, Limit limit);
 
+    /** How many stories pin each 5-second slot of a song: the dots on the moments timeline. */
+    @Query(value = """
+            SELECT (moment_sec / 5) * 5 AS sec, count(*) AS stories FROM stories
+            WHERE song_id = :songId AND status = 'VISIBLE' AND moment_sec IS NOT NULL
+            GROUP BY 1 ORDER BY 1
+            """, nativeQuery = true)
+    List<MomentCount> countMoments(@Param("songId") long songId);
+
+    interface MomentCount {
+        int getSec();
+        long getStories();
+    }
+
     /** One author's stories for their profile grid. Backed by idx_stories_user_feed. */
     List<Story> findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
             long userId, StoryStatus status, long beforeId, Limit limit);
