@@ -40,10 +40,23 @@ export function StoryCard({ story, onDeleted, expanded = false }: Props) {
         </Pressable>
       </View>
 
+      {story.review ? <ReviewNote review={story.review} /> : null}
       <StoryBody story={story} expanded={expanded} />
 
       <ResonateRow story={story} />
     </View>
+  );
+}
+
+/** Only you see this on your own story: why others can't. */
+function ReviewNote({ review }: { review: 'hidden' | 'removed' }) {
+  const styles = useStyles();
+  return (
+    <Text style={styles.review}>
+      {review === 'hidden'
+        ? 'Hidden while we review some reports. Only you can see it.'
+        : 'Removed for breaking the Community Guidelines. Only you can see it.'}
+    </Text>
   );
 }
 
@@ -92,4 +105,5 @@ const useStyles = makeStyles(({ colors, type }) => ({
   meta: { ...type.hint, color: colors.textMuted },
   more: { color: colors.textMuted, fontSize: 14, letterSpacing: 1 },
   readMore: { ...type.hint, fontWeight: '600' },
+  review: { ...type.hint, color: colors.danger },
 }));

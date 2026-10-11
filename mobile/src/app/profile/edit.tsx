@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { AvatarPicker } from '@/features/profile/AvatarPicker';
 import { emailSupport, openLegal } from '@/lib/legal';
 import { MAX_BIO, useEditProfile } from '@/features/profile/useEditProfile';
+import { useStanding } from '@/features/moderation/useStanding';
 import { useSession } from '@/features/session/useSession';
 import { makeStyles, space, useTheme } from '@/theme';
 
@@ -20,6 +21,7 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
   const styles = useStyles();
   const { type } = useTheme();
   const form = useEditProfile(profile);
+  const standing = useStanding();
 
   return (
     <Screen>
@@ -56,6 +58,7 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
       <View style={styles.danger}>
         <Text style={type.label}>ACCOUNT</Text>
         <Button label="Blocked accounts" variant="ghost" onPress={() => router.push('/settings/blocked')} />
+        {standing?.admin ? <Button label="Review queue" variant="ghost" onPress={() => router.push('/admin/queue')} /> : null}
         <Button label="Delete account" variant="ghost" onPress={form.confirmDeleteAccount} />
       </View>
     </Screen>

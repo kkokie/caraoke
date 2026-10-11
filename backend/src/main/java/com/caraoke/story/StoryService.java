@@ -104,6 +104,7 @@ public class StoryService {
     public StoryView edit(String authUid, long storyId, StoryInput req) {
         long userId = requireProfile(authUid);
         Story story = requireOwnStory(storyId, userId);
+        if (story.isRemoved()) throw ApiErrors.forbidden("This story was removed for breaking the Community Guidelines.");
         SongView song = songs.get(story.getSongId());
         story.edit(
                 StoryRules.body(req.body()),

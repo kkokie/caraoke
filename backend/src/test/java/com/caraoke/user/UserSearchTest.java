@@ -16,7 +16,7 @@ class UserSearchTest {
 
     private final UserRepository users = mock(UserRepository.class);
     private final com.caraoke.block.BlockService blocks = mock(com.caraoke.block.BlockService.class);
-    private final UserService service = new UserService(users, mock(MediaStorage.class), blocks);
+    private final UserService service = new UserService(users, mock(MediaStorage.class), blocks, mock(BannedAuthUidRepository.class));
 
     @Test
     void wildcardsAreEscapedNotStripped() {

@@ -15,7 +15,12 @@ import { useProfile } from './useProfile';
  * and /user/[handle] (anyone else). On your own profile, a Stories | Felt switcher
  * shows the stories you resonated with (private to you).
  */
-export function ProfileScreen({ handle, edges = ['left', 'right'] }: { handle: string; edges?: ('top' | 'left' | 'right' | 'bottom')[] }) {
+export function ProfileScreen({ handle, edges = ['left', 'right'], notice }: {
+  handle: string;
+  edges?: ('top' | 'left' | 'right' | 'bottom')[];
+  /** Shown above the header (your own page: account standing). */
+  notice?: ReactNode;
+}) {
   const styles = useStyles();
   const { colors, type } = useTheme();
   const p = useProfile(handle);
@@ -56,6 +61,7 @@ export function ProfileScreen({ handle, edges = ['left', 'right'] }: { handle: s
         renderItem={({ item }) => <StoryTile tile={item} />}
         ListHeaderComponent={
           <View style={styles.header}>
+            {notice}
             <ProfileHeader profile={profile} onChanged={p.refresh} />
             {profile.me ? <GridTabs tab={tab} onChange={selectTab} /> : null}
           </View>

@@ -105,4 +105,9 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
 
     @Query("select s.id from Story s where s.userId = :userId and s.status = :status")
     List<Long> findIdsByUserIdAndStatus(@Param("userId") long userId, @Param("status") StoryStatus status);
+
+    /** A ban takes down everything the person shared. */
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Story s set s.status = com.caraoke.story.StoryStatus.REMOVED where s.userId = :userId and s.status <> com.caraoke.story.StoryStatus.REMOVED")
+    int removeAllByUserId(@Param("userId") long userId);
 }

@@ -77,6 +77,27 @@ public class Story {
         this.editedAt = Instant.now();
     }
 
+    /** Enough people reported it: out of every feed until a moderator looks. Only from VISIBLE. */
+    boolean hideForReview() {
+        if (status != StoryStatus.VISIBLE) return false;
+        status = StoryStatus.HIDDEN;
+        return true;
+    }
+
+    /** A moderator found nothing wrong: back where it was. Removed stays removed. */
+    void restore() {
+        if (status == StoryStatus.HIDDEN) status = StoryStatus.VISIBLE;
+    }
+
+    /** Broke the Community Guidelines. Final: the author sees it marked removed and can't edit it. */
+    void remove() {
+        status = StoryStatus.REMOVED;
+    }
+
+    boolean isRemoved() {
+        return status == StoryStatus.REMOVED;
+    }
+
     boolean isVisible() {
         return status == StoryStatus.VISIBLE;
     }

@@ -60,11 +60,17 @@ Car constraints (checked Oct 2026), which shape the design:
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
 - **Dependencies between features point one way, with no cycles.** Example: `story` → `resonance`. The resonance feature only stores and counts; the story feature owns the rules (visible, not your own) and the endpoints.
 - **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` + `follow` (user can't call story, because story already calls user).
-  Current graph: `profile → user, story, follow, resonance` · `story → user, song, resonance` (incl. Discover) · `user, song, resonance, follow → (nothing)`. `media` is infrastructure (like `common/`): any feature may use it, it uses none.
+  Current graph: `profile → user, story, follow, resonance` · `safety → user, story, report, moderation` · `moderation → report, story, user, song` · `story → user, song, resonance` (incl. Discover) · `user, song, resonance, follow, report → (nothing)`. `media` is infrastructure (like `common/`): any feature may use it, it uses none.
 - **Tests:** unit tests (Mockito) for services, `@WebMvcTest` for controllers, and `PersistenceTest` (Testcontainers Postgres) for anything with real SQL: native queries, projections, keyset paging. Booting it also proves Flyway and entity mappings agree.
 - Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
 - Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging. When ordering isn't by id (e.g. "stories I felt" by resonance time), use an **opaque cursor** carrying the sort key plus a tiebreaker (`FeltCursor` = createdAt + storyId).
 - **Privacy defaults:** what you *felt* is private (only `/api/me/felt`, never by handle).
+- **Moderation** (`com.caraoke.moderation`):
+  - **Auto-hide:** a story reported by `app.moderation.auto-hide-reporters` (default 3) *different* people flips to `HIDDEN` (out of every feed; the author still sees it marked "in review"). People are never auto-hidden.
+  - **Decisions** (`/api/admin/**`, admins only): DISMISS (a hidden story comes back), STRIKE (on a story: `REMOVED` + strike its author), BAN. Each closes that target's open reports.
+  - **Strike ladder** (`StrikeLadder`): 1 = WARNED, 2 = SUSPENDED 7 days, 3+ = BANNED. A ban removes all their stories and records the sign-in in `banned_auth_uids` so deleting and re-signing-up doesn't undo it. Reinstate voids strikes (removed stories stay removed).
+  - **Enforcement** is one filter (`config/StandingFilter` via `auth/AccountGate`), not per-feature checks: SUSPENDED can read but not write, BANNED can do nothing except `GET /api/me/standing` and `DELETE /api/me` (App Store: deletion always works).
+  - **Admins** are set by hand: `UPDATE users SET role = 'ADMIN' WHERE handle = '…';`. No endpoint grants it.
 
 ### Conventions
 - Schema changes: new Flyway migration `V<n>__<description>.sql`. Never edit an applied migration.

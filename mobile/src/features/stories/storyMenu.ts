@@ -22,10 +22,11 @@ function openOthersMenu(story: Story, onRemoved?: (id: number) => void) {
 }
 
 function openOwnMenu(story: Story, onDeleted?: (id: number) => void) {
+  const edit = { text: 'Edit', onPress: () => router.push({ pathname: '/story/[id]/edit', params: { id: String(story.id) } }) };
   Alert.alert('Your story', undefined, [
-    { text: 'Edit', onPress: () => router.push({ pathname: '/story/[id]/edit', params: { id: String(story.id) } }) },
-    { text: 'Delete', style: 'destructive', onPress: () => confirmDelete(story, onDeleted) },
-    { text: 'Cancel', style: 'cancel' },
+    ...(story.review === 'removed' ? [] : [edit]),          // removed stories can't be edited back
+    { text: 'Delete', style: 'destructive' as const, onPress: () => confirmDelete(story, onDeleted) },
+    { text: 'Cancel', style: 'cancel' as const },
   ]);
 }
 

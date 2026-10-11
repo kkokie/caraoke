@@ -48,6 +48,7 @@ class PersistenceTest {
     @Autowired com.caraoke.user.UserRepository users;
     @Autowired com.caraoke.block.BlockRepository blocks;
     @Autowired com.caraoke.report.ReportRepository reports;
+    @Autowired com.caraoke.moderation.StrikeRepository strikes;
 
     // ---- resonances ---------------------------------------------------------
 
@@ -337,6 +338,78 @@ class PersistenceTest {
         assertThat(reports.countOpenReporters(com.caraoke.report.ReportTarget.STORY, target)).isEqualTo(2);
         assertThat(reports.existsByReporterIdAndTargetTypeAndTargetIdAndResolvedAtIsNull(
                 ian, com.caraoke.report.ReportTarget.STORY, target)).isTrue();
+    }
+
+    // ---- moderation -------------------------------------------------------------
+
+    @Test
+    void queueGroupsOpenReportsPerTargetOldestFirstWithKeysetPaging() {
+        long ian = user("ian"), sam = user("sam"), joe = user("joe"), song = song();
+        long first = story(joe, song), second = story(joe, song);
+        report(ian, "STORY", first, "SPAM");
+        report(sam, "STORY", first, "HATE");
+        report(ian, "STORY", first, "SPAM");                     // same person twice: one reporter
+        report(ian, "USER", joe, "IMPERSONATION");
+        long resolved = report(sam, "STORY", second, "SPAM");
+        jdbc.update("UPDATE reports SET resolved_at = now() WHERE id = ?", resolved);   // closed: not in the queue
+
+        var page = reports.findQueue(0L, 10);
+        assertThat(page).extracting(r -> r.getTargetType() + ":" + r.getTargetId())
+                .containsExactly("STORY:" + first, "USER:" + joe);
+        assertThat(page.get(0).getReporters()).isEqualTo(2L);
+        assertThat(page.get(0).getReasons().split(",")).containsExactlyInAnyOrder("HATE", "SPAM");
+        assertThat(page.get(0).getLastReportedMillis()).isPositive();
+
+        assertThat(reports.findQueue(page.get(0).getFirstReportId(), 10))
+                .extracting(r -> r.getTargetType()).containsExactly("USER");
+    }
+
+    @Test
+    void resolvingClosesOnlyThatTargetsOpenReports() {
+        long ian = user("ian"), sam = user("sam"), joe = user("joe"), song = song();
+        long target = story(joe, song), other = story(joe, song);
+        report(ian, "STORY", target, "SPAM");
+        report(sam, "STORY", target, "SPAM");
+        report(ian, "STORY", other, "SPAM");
+
+        int closed = reports.resolveOpen(com.caraoke.report.ReportTarget.STORY, target,
+                com.caraoke.report.Resolution.ACTIONED, ian, java.time.Instant.now());
+
+        assertThat(closed).isEqualTo(2);
+        assertThat(reports.countOpenReporters(com.caraoke.report.ReportTarget.STORY, target)).isZero();
+        assertThat(reports.countOpenReporters(com.caraoke.report.ReportTarget.STORY, other)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT resolution FROM reports WHERE target_id = ? LIMIT 1", String.class, target))
+                .isEqualTo("ACTIONED");
+    }
+
+    @Test
+    void aBanTakesDownEveryStoryButOnlyTheirs() {
+        long sam = user("sam"), joe = user("joe"), song = song();
+        long a = story(sam, song), b = story(sam, song), keep = story(joe, song);
+        jdbc.update("UPDATE stories SET status = 'HIDDEN' WHERE id = ?", b);
+
+        assertThat(stories.removeAllByUserId(sam)).isEqualTo(2);
+        assertThat(jdbc.queryForList("SELECT status FROM stories WHERE id IN (?, ?)", String.class, a, b))
+                .containsOnly("REMOVED");
+        assertThat(jdbc.queryForObject("SELECT status FROM stories WHERE id = ?", String.class, keep)).isEqualTo("VISIBLE");
+    }
+
+    @Test
+    void voidedStrikesDontCount() {
+        long sam = user("sam"), ian = user("ian");
+        jdbc.update("INSERT INTO strikes (user_id, reason, issued_by) VALUES (?, 'SPAM', ?), (?, 'HATE', ?)", sam, ian, sam, ian);
+        assertThat(strikes.countByUserIdAndVoidedAtIsNull(sam)).isEqualTo(2);
+
+        strikes.voidAll(sam, java.time.Instant.now());
+
+        assertThat(strikes.countByUserIdAndVoidedAtIsNull(sam)).isZero();
+        assertThat(strikes.findTop20ByUserIdOrderByIdDesc(sam)).hasSize(2).allMatch(s -> s.getVoidedAt() != null);
+    }
+
+    private long report(long reporter, String type, long target, String reason) {
+        return jdbc.queryForObject(
+                "INSERT INTO reports (reporter_id, target_type, target_id, reason) VALUES (?, ?, ?, ?) RETURNING id",
+                Long.class, reporter, type, target, reason);
     }
 
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----
