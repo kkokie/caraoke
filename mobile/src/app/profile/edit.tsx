@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { PublicProfile } from '@/api/client';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
@@ -45,6 +46,7 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
 
       <View style={styles.danger}>
         <Text style={type.label}>ACCOUNT</Text>
+        <Button label="Blocked accounts" variant="ghost" onPress={() => router.push('/settings/blocked')} />
         <Button label="Delete account" variant="ghost" onPress={form.confirmDeleteAccount} />
       </View>
     </Screen>

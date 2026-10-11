@@ -34,11 +34,12 @@ class ProfileServiceTest {
     @Mock UserService users;
     @Mock AuthorStoriesService authorStories;
     @Mock FollowService follows;
+    @Mock com.caraoke.block.BlockService blocks;
     ProfileService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileService(users, authorStories, follows);
+        service = new ProfileService(users, authorStories, follows, blocks);
     }
 
     @Test
@@ -71,6 +72,33 @@ class ProfileServiceTest {
         assertThat(view.me()).isTrue();
         assertThat(view.social().followedByMe()).isFalse();   // never "following yourself"
         verify(follows, never()).isFollowing(anyLong(), anyLong());
+    }
+
+    @Test
+    void ifTheyBlockedYouTheirProfileDoesntExist() {
+        when(users.findUserIdByHandle("sam")).thenReturn(Optional.of(6L));
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
+        when(blocks.hasBlocked(6L, 5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.profile("uid-ian", "sam"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(e -> assertThat(((ResponseStatusException) e).getStatusCode().value()).isEqualTo(404));
+    }
+
+    @Test
+    void ifYouBlockedThemYouSeeThatAndNoStories() {
+        when(users.findUserIdByHandle("sam")).thenReturn(Optional.of(6L));
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
+        when(blocks.hasBlocked(6L, 5L)).thenReturn(false);
+        when(blocks.hasBlocked(5L, 6L)).thenReturn(true);
+        when(users.getByHandle("sam")).thenReturn(SAM);
+        when(authorStories.stats(6L)).thenReturn(new AuthorStats(3, 12));
+        when(follows.counts(6L)).thenReturn(new FollowService.Counts(40, 7));
+        when(blocks.eitherBlocked(5L, 6L)).thenReturn(true);
+
+        assertThat(service.profile("uid-ian", "sam").blockedByMe()).isTrue();
+        assertThat(service.stories("uid-ian", "sam", null, 30).items()).isEmpty();
+        verify(authorStories, never()).tiles(anyLong(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyInt());
     }
 
     @Test

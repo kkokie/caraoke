@@ -30,11 +30,12 @@ class StoryDiscoveryServiceTest {
     @Mock SongService songs;
     @Mock UserService users;
     @Mock ResonanceService resonances;
+    @Mock com.caraoke.block.BlockService blocks;
     StoryDiscoveryService service;
 
     @BeforeEach
     void setUp() {
-        service = new StoryDiscoveryService(stories, new StoryViewAssembler(users, resonances), songs, users);
+        service = new StoryDiscoveryService(stories, new StoryViewAssembler(users, resonances), songs, users, blocks);
     }
 
     @Test
@@ -42,7 +43,7 @@ class StoryDiscoveryServiceTest {
         Story found = new Story(6L, 7L, "x".repeat(100), 134, (short) 2009);
         ReflectionTestUtils.setField(found, "id", 40L);
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
-        when(stories.findRandomForDig(5L, StoryDiscoveryService.MIN_DIG_CHARS, "{1,2}")).thenReturn(Optional.of(found));
+        when(stories.findRandomForDig(5L, StoryDiscoveryService.MIN_DIG_CHARS, "{1,2}", "{}")).thenReturn(Optional.of(found));
         when(users.findAuthors(anySet())).thenReturn(Map.of(6L, new Author("sam", "Sam", null)));
         when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
         when(songs.findSummaries(anyCollection())).thenReturn(Map.of(7L, new SongSummary(7L, "Summer Static", "The Low Tides", null)));
@@ -56,7 +57,7 @@ class StoryDiscoveryServiceTest {
     @Test
     void signedOutViewersDigWithAnIdNoOneHas() {
         when(users.findUserId("uid-anon")).thenReturn(Optional.empty());
-        when(stories.findRandomForDig(-1L, StoryDiscoveryService.MIN_DIG_CHARS, "{}")).thenReturn(Optional.empty());
+        when(stories.findRandomForDig(-1L, StoryDiscoveryService.MIN_DIG_CHARS, "{}", "{}")).thenReturn(Optional.empty());
 
         assertThat(service.dig("uid-anon", List.of())).isEmpty();
     }

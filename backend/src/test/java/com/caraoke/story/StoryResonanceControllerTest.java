@@ -56,7 +56,7 @@ class StoryResonanceControllerTest {
 
     @Test
     void resonatorsListsAuthors() throws Exception {
-        when(service.resonators(20L)).thenReturn(List.of(new Author("jo", "Jo", null)));
+        when(service.resonators("u1", 20L)).thenReturn(List.of(new Author("jo", "Jo", null)));
 
         mvc.perform(get("/api/stories/20/resonators").header(USER, "u1"))
                 .andExpect(status().isOk())

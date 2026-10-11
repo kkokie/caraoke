@@ -1,5 +1,6 @@
 package com.caraoke.story;
 
+import com.caraoke.block.BlockService;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.song.SongDtos.SongSummary;
 import com.caraoke.song.SongService;
@@ -35,8 +36,11 @@ public class StoryDiscoveryService {
     private final StoryViewAssembler views;
     private final SongService songs;
     private final UserService users;
+    private final BlockService blocks;
 
-    public StoryDiscoveryService(StoryRepository stories, StoryViewAssembler views, SongService songs, UserService users) {
+    public StoryDiscoveryService(StoryRepository stories, StoryViewAssembler views, SongService songs,
+                                 UserService users, BlockService blocks) {
+        this.blocks = blocks;
         this.stories = stories;
         this.views = views;
         this.songs = songs;
@@ -47,7 +51,8 @@ public class StoryDiscoveryService {
     @Transactional(readOnly = true)
     public Optional<FoundStory> dig(String authUid, Collection<Long> alreadySeen) {
         Long viewerId = users.findUserId(authUid).orElse(null);
-        return stories.findRandomForDig(viewerId == null ? -1L : viewerId, MIN_DIG_CHARS, arrayLiteral(alreadySeen))
+        String hidden = BlockService.arrayLiteral(blocks.hiddenFrom(viewerId));
+        return stories.findRandomForDig(viewerId == null ? -1L : viewerId, MIN_DIG_CHARS, arrayLiteral(alreadySeen), hidden)
                 .map(s -> found(List.of(s), viewerId).get(0));
     }
 
@@ -60,8 +65,9 @@ public class StoryDiscoveryService {
     public FoundStoryPage byYear(String authUid, int year, Long beforeId) {
         if (year < StoryRules.MIN_YEAR || year > 2999) throw ApiErrors.badRequest("That's not a year we have stories for.");
         Long viewerId = users.findUserId(authUid).orElse(null);
-        List<Story> rows = stories.findByYearOfMemoryAndStatusAndIdLessThanOrderByIdDesc(
-                (short) year, StoryStatus.VISIBLE, beforeId == null ? Long.MAX_VALUE : beforeId, Limit.of(PAGE_SIZE + 1));
+        List<Story> rows = stories.findByYearOfMemoryAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                (short) year, StoryStatus.VISIBLE, beforeId == null ? Long.MAX_VALUE : beforeId,
+                BlockService.notInList(blocks.hiddenFrom(viewerId)), Limit.of(PAGE_SIZE + 1));
         boolean hasMore = rows.size() > PAGE_SIZE;
         List<Story> page = hasMore ? rows.subList(0, PAGE_SIZE) : rows;
         Long next = hasMore ? page.get(page.size() - 1).getId() : null;

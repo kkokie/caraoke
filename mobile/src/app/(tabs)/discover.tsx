@@ -68,7 +68,7 @@ function FoundSection() {
         ) : null}
       </View>
       {state.kind === 'digging' ? <ActivityIndicator color={colors.accent} style={styles.spinner} /> : null}
-      {state.kind === 'found' ? <FoundStoryCard found={state.found} /> : null}
+      {state.kind === 'found' ? <FoundStoryCard found={state.found} onRemoved={dig} /> : null}
       {state.kind === 'empty' ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>

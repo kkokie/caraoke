@@ -1,5 +1,6 @@
 package com.caraoke.story;
 
+import com.caraoke.block.BlockService;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.song.SongDtos.SongView;
 import com.caraoke.song.SongService;
@@ -30,9 +31,14 @@ public class StoryService {
     private final UserService users;
     private final StoryViewAssembler views;
     private final DailyShareLimit dailyLimit;
+    private final BlockService blocks;
+    private final StoryContentGuard guard;
 
     public StoryService(StoryRepository stories, SongService songs, UserService users,
-                        StoryViewAssembler views, DailyShareLimit dailyLimit) {
+                        StoryViewAssembler views, DailyShareLimit dailyLimit, BlockService blocks,
+                        StoryContentGuard guard) {
+        this.blocks = blocks;
+        this.guard = guard;
         this.stories = stories;
         this.songs = songs;
         this.users = users;
@@ -51,6 +57,7 @@ public class StoryService {
                 StoryRules.moment(req.momentSec(), song.durationSec()),
                 StoryRules.year(req.yearOfMemory(), Year.now()));
         story.style(StoryRules.lyric(req.lyricQuote()), StoryRules.paper(req.paper()));
+        guard.check(story.getBody(), story.getLyricQuote(), null);
         dailyLimit.check(userId);                                // 429 if today's story is already shared
         return views.toView(stories.save(story), userId);
     }
@@ -65,9 +72,11 @@ public class StoryService {
     public StoryPage feed(String authUid, long songId, Long beforeId, int requestedSize) {
         songs.get(songId);                                       // 404 for unknown songs, not an empty feed
         int size = clampPageSize(requestedSize);
-        List<Story> rows = stories.findBySongIdAndStatusAndIdLessThanOrderByIdDesc(
-                songId, StoryStatus.VISIBLE, beforeId == null ? Long.MAX_VALUE : beforeId, Limit.of(size + 1));
-        return toPage(rows, size, users.findUserId(authUid).orElse(null));
+        Long viewerId = users.findUserId(authUid).orElse(null);
+        List<Story> rows = stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                songId, StoryStatus.VISIBLE, beforeId == null ? Long.MAX_VALUE : beforeId,
+                BlockService.notInList(blocks.hiddenFrom(viewerId)), Limit.of(size + 1));
+        return toPage(rows, size, viewerId);
     }
 
     /** Dots for the moments timeline: how many stories pin each 5-second slot. */
@@ -85,6 +94,7 @@ public class StoryService {
         Long viewerId = users.findUserId(authUid).orElse(null);
         Story story = stories.findById(storyId)
                 .filter(s -> s.isVisible() || (viewerId != null && s.isWrittenBy(viewerId)))
+                .filter(s -> !blocks.eitherBlocked(viewerId, s.getUserId()))   // blocked either way: it doesn't exist
                 .orElseThrow(() -> ApiErrors.notFound("Story not found"));
         return views.toView(story, viewerId);
     }
@@ -100,6 +110,7 @@ public class StoryService {
                 StoryRules.moment(req.momentSec(), song.durationSec()),
                 StoryRules.year(req.yearOfMemory(), Year.now()));
         story.style(StoryRules.lyric(req.lyricQuote()), StoryRules.paper(req.paper()));
+        guard.check(story.getBody(), story.getLyricQuote(), story.getId());
         return views.toView(story, userId);                      // dirty checking saves on commit
     }
 

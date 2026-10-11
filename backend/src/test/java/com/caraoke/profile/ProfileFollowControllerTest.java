@@ -51,8 +51,8 @@ class ProfileFollowControllerTest {
 
     @Test
     void followersAndFollowingLists() throws Exception {
-        when(service.followers("sam")).thenReturn(List.of(new Author("jo", "Jo", null)));
-        when(service.following("sam")).thenReturn(List.of(new Author("ian", "Ian", null)));
+        when(service.followers("u1", "sam")).thenReturn(List.of(new Author("jo", "Jo", null)));
+        when(service.following("u1", "sam")).thenReturn(List.of(new Author("ian", "Ian", null)));
 
         mvc.perform(get("/api/profiles/sam/followers").header(USER, "u1"))
                 .andExpect(jsonPath("$[0].handle").value("jo"));

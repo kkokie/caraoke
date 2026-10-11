@@ -35,11 +35,9 @@ export function StoryCard({ story, onDeleted, expanded = false }: Props) {
             </Text>
           </View>
         </Pressable>
-        {story.mine ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Story options" onPress={() => openStoryMenu(story, onDeleted)} hitSlop={12}>
-            <Text style={styles.more}>•••</Text>
-          </Pressable>
-        ) : null}
+        <Pressable accessibilityRole="button" accessibilityLabel="Story options" onPress={() => openStoryMenu(story, onDeleted)} hitSlop={12}>
+          <Text style={styles.more}>•••</Text>
+        </Pressable>
       </View>
 
       <StoryBody story={story} expanded={expanded} />

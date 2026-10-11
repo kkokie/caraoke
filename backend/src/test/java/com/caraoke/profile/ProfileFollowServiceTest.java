@@ -24,11 +24,12 @@ class ProfileFollowServiceTest {
 
     @Mock UserService users;
     @Mock FollowService follows;
+    @Mock com.caraoke.block.BlockService blocks;
     ProfileFollowService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProfileFollowService(users, follows);
+        service = new ProfileFollowService(users, follows, blocks);
     }
 
     @Test
@@ -64,7 +65,17 @@ class ProfileFollowServiceTest {
                 5L, new Author("ian", "Ian", null),
                 9L, new Author("jo", "Jo", null)));
 
-        assertThat(service.followers("sam")).extracting(Author::handle).containsExactly("jo", "ian");
+        assertThat(service.followers("uid-anon", "sam")).extracting(Author::handle).containsExactly("jo", "ian");
+    }
+
+    @Test
+    void cantFollowSomeoneBlockedEitherWay() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
+        when(users.findUserIdByHandle("sam")).thenReturn(Optional.of(6L));
+        when(blocks.eitherBlocked(5L, 6L)).thenReturn(true);
+
+        assertStatus(() -> service.follow("uid-ian", "sam"), 404);
+        verifyNoInteractions(follows);
     }
 
     private static void assertStatus(Runnable call, int status) {
