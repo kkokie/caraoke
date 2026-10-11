@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '@/api/client';
+import { api, PublicProfile } from '@/api/client';
 import { normalizeHandle } from '@/lib/handle';
 import { useSession } from '@/features/session/useSession';
 import { useHandleAvailability } from './useHandleAvailability';
@@ -17,6 +17,8 @@ export function useOnboardingForm() {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Step 2 ("your page song") runs after the profile exists, before the app opens
+  const [created, setCreated] = useState<PublicProfile | null>(null);
 
   const handleStatus = useHandleAvailability(handle);
   const canSubmit = handleStatus.kind === 'available' && displayName.trim().length > 0 && over13 && agreed && !submitting;
@@ -33,7 +35,7 @@ export function useOnboardingForm() {
         acceptedTerms: agreed,
         confirmedAge: over13,
       });
-      completeOnboarding(profile);   // router guard moves us to /home
+      setCreated(profile);           // on to step 2; finish() opens the app
     } catch (e) {
       // e.g. someone grabbed the handle between the check and submit (409)
       setSubmitError(e instanceof Error ? e.message : 'Something went wrong');
@@ -41,7 +43,12 @@ export function useOnboardingForm() {
     }
   }
 
+  /** Done with step 2 (or skipped it): the router guard moves us into the app. */
+  const finish = () => { if (created) completeOnboarding(created); };
+
   return {
+    created,
+    finish,
     fields: { handle, displayName, bio },
     setHandle,
     setDisplayName: (v: string) => setDisplayName(v.slice(0, MAX_NAME)),

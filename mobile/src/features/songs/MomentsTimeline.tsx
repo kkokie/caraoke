@@ -4,15 +4,23 @@ import { api, MomentCount } from '@/api/client';
 import { formatDuration } from '@/lib/format';
 import { makeStyles, space } from '@/theme';
 
+type Props = {
+  songId: number;
+  durationSec: number | null;
+  /** The dot whose stories the feed is showing (its `sec`), or null for all stories. */
+  selected: number | null;
+  onSelect: (sec: number | null) => void;
+};
+
 /**
  * The song as a line, with a dot wherever people pinned a moment (bigger = more stories).
- * Tap a dot to see when it is and how many stories are there.
+ * Tap a dot to show only its stories below; tap it again to see them all.
  */
-export function MomentsTimeline({ songId, durationSec }: { songId: number; durationSec: number | null }) {
+export function MomentsTimeline({ songId, durationSec, selected, onSelect }: Props) {
   const styles = useStyles();
   const [moments, setMoments] = useState<MomentCount[]>([]);
   const [width, setWidth] = useState(0);
-  const [picked, setPicked] = useState<MomentCount | null>(null);
+  const picked = moments.find((m) => m.sec === selected) ?? null;
 
   useEffect(() => {
     api.getMoments(songId).then(setMoments).catch(() => setMoments([]));
@@ -37,7 +45,8 @@ export function MomentsTimeline({ songId, durationSec }: { songId: number; durat
               accessibilityRole="button"
               accessibilityLabel={`${formatDuration(m.sec)}, ${m.stories} ${m.stories === 1 ? 'story' : 'stories'}`}
               hitSlop={10}
-              onPress={() => setPicked(m)}
+              accessibilityState={{ selected: m.sec === selected }}
+              onPress={() => onSelect(m.sec === selected ? null : m.sec)}
               style={[styles.dot, on && styles.dotOn, { width: size, height: size, borderRadius: size / 2, left, top: 14 - size / 2 }]}
             />
           );
@@ -46,7 +55,7 @@ export function MomentsTimeline({ songId, durationSec }: { songId: number; durat
       <View style={styles.ends}>
         <Text style={styles.end}>0:00</Text>
         <Text style={styles.picked}>
-          {formatDuration(shown.sec)} · {shown.stories} {shown.stories === 1 ? 'story' : 'stories'}
+          {picked ? '' : 'Busiest: '}{formatDuration(shown.sec)} · {shown.stories} {shown.stories === 1 ? 'story' : 'stories'}
         </Text>
         <Text style={styles.end}>{formatDuration(durationSec)}</Text>
       </View>

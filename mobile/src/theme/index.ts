@@ -1,3 +1,4 @@
+import { createContext, createElement, ReactNode, useContext } from 'react';
 import { useColorScheme, StyleSheet } from 'react-native';
 import { dark, light, Palette } from './palettes';
 import { TypeScale, typeFor } from './type';
@@ -17,10 +18,25 @@ const themes: Record<'light' | 'dark', Theme> = {
   light: { colors: light, type: typeFor(light), scheme: 'light' },
 };
 
-/** The current theme; follows the phone's light/dark setting (dark if unknown). */
+const ScopedTheme = createContext<Theme | null>(null);
+
+/**
+ * The current theme; follows the phone's light/dark setting (dark if unknown).
+ * Inside a <ThemeScope> (a decorated page), that page's theme instead.
+ */
 export function useTheme(): Theme {
-  return themes[useColorScheme() === 'light' ? 'light' : 'dark'];
+  const scoped = useContext(ScopedTheme);
+  const base = themes[useColorScheme() === 'light' ? 'light' : 'dark'];
+  return scoped ?? base;
 }
+
+/** Everything inside draws with `theme` (use pageTheme() so the object is cached and stable). */
+export function ThemeScope({ theme, children }: { theme: Theme; children: ReactNode }) {
+  return createElement(ScopedTheme.Provider, { value: theme }, children);
+}
+
+export { pageTheme, pagePalette, PAGE_THEMES, PAGE_TYPES } from './pageThemes';
+export type { PageThemeName, PageTypeName } from './pageThemes';
 
 /**
  * Themed StyleSheets: `const useStyles = makeStyles(({ colors, type }) => ({ ... }))`,
