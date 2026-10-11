@@ -20,7 +20,9 @@ final class ItunesPayload {
             String artistName,
             String collectionName,
             String artworkUrl100,
-            Long trackTimeMillis) {
+            Long trackTimeMillis,
+            String releaseDate,             // ISO instant, e.g. "2017-04-21T07:00:00Z"
+            String collectionArtistName) {  // "Various Artists" on compilations
 
         boolean isSong() {
             return "song".equals(kind) && trackId != null && trackName != null && artistName != null;
