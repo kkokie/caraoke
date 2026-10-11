@@ -149,7 +149,17 @@ export type ProfileView = {
   stats: { stories: number; felt: number };
   social: { followers: number; following: number; followedByMe: boolean };
   me: boolean;
+  blockedByMe: boolean;   // you blocked them: show Unblock, no stories
 };
+
+export type ReportReason =
+  | 'SPAM' | 'HARASSMENT' | 'HATE' | 'SEXUAL' | 'VIOLENCE' | 'SELF_HARM' | 'IMPERSONATION' | 'OTHER';
+
+export type ReportBody =
+  | { kind: 'STORY'; storyId: number; reason: ReportReason; details?: string }
+  | { kind: 'USER'; handle: string; reason: ReportReason; details?: string };
+
+export type BlockedAccount = { handle: string; displayName: string; avatarUrl: string | null };
 
 export type FollowState = {
   following: boolean;
@@ -273,6 +283,14 @@ export const api = {
     request<FoundStoryPage>(`/api/discover/years/${year}${before ? `?before=${before}` : ''}`),
 
   songsFullOfStories: () => request<SongWithCount[]>('/api/discover/songs'),
+
+  report: (body: ReportBody) => request<void>('/api/reports', { method: 'POST', body: JSON.stringify(body) }),
+
+  block: (handle: string) => request<void>(`/api/profiles/${encodeURIComponent(handle)}/block`, { method: 'PUT' }),
+
+  unblock: (handle: string) => request<void>(`/api/profiles/${encodeURIComponent(handle)}/block`, { method: 'DELETE' }),
+
+  blockedAccounts: () => request<BlockedAccount[]>('/api/me/blocked'),
 
   searchPeople: (q: string) => request<Author[]>(`/api/search/people?q=${encodeURIComponent(q)}`),
 

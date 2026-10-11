@@ -56,13 +56,13 @@ export function ProfileScreen({ handle, edges = ['left', 'right'] }: { handle: s
         renderItem={({ item }) => <StoryTile tile={item} />}
         ListHeaderComponent={
           <View style={styles.header}>
-            <ProfileHeader profile={profile} />
+            <ProfileHeader profile={profile} onChanged={p.refresh} />
             {profile.me ? <GridTabs tab={tab} onChange={selectTab} /> : null}
           </View>
         }
         ListEmptyComponent={showingFelt
           ? <FeltEmpty loading={felt.status === 'loading' || felt.status === 'idle'} />
-          : <EmptyGrid mine={profile.me} />}
+          : <EmptyGrid mine={profile.me} blocked={profile.blockedByMe} handle={profile.user.handle} />}
         ListFooterComponent={grid.loadingMore ? <ActivityIndicator color={colors.accent} style={styles.footer} /> : null}
         onEndReached={grid.loadMore}
         onEndReachedThreshold={0.5}
@@ -71,13 +71,13 @@ export function ProfileScreen({ handle, edges = ['left', 'right'] }: { handle: s
   );
 }
 
-function EmptyGrid({ mine }: { mine: boolean }) {
+function EmptyGrid({ mine, blocked, handle }: { mine: boolean; blocked: boolean; handle: string }) {
   const styles = useStyles();
   const { type } = useTheme();
   return (
     <View style={styles.empty}>
       <Text style={[type.subtitle, styles.center]}>
-        {mine ? 'Your stories will show up here.' : 'No stories yet.'}
+        {mine ? 'Your stories will show up here.' : blocked ? `You blocked @${handle}. Unblock to see their stories.` : 'No stories yet.'}
       </Text>
       {mine ? <Button label="Find a song" onPress={() => router.push('/search')} /> : null}
     </View>

@@ -29,7 +29,7 @@ public class StoryResonanceController {
     }
 
     @GetMapping("/resonators")
-    public List<Author> resonators(@PathVariable long storyId) {
-        return service.resonators(storyId);
+    public List<Author> resonators(Authentication auth, @PathVariable long storyId) {
+        return service.resonators(auth.getName(), storyId);
     }
 }

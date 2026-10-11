@@ -60,8 +60,8 @@ public class UserController {
 
     /** Find people by @handle or name (signed in only, to slow scraping). */
     @GetMapping("/search/people")
-    public java.util.List<Author> searchPeople(@RequestParam(name = "q", defaultValue = "") String q) {
-        return service.searchPeople(q);
+    public java.util.List<Author> searchPeople(Authentication auth, @RequestParam(name = "q", defaultValue = "") String q) {
+        return service.searchPeople(auth.getName(), q);
     }
 
     // ---- Public ------------------------------------------------------------
