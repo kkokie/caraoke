@@ -9,7 +9,7 @@ import static org.mockito.Mockito.*;
 class ReportServiceTest {
 
     private final ReportRepository reports = mock(ReportRepository.class);
-    private final ReportService service = new ReportService(reports);
+    private final ReportService service = new ReportService(reports, java.time.Clock.systemUTC());
 
     @Test
     void reportingTwiceIsCountedOnce() {

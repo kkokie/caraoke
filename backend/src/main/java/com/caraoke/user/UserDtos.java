@@ -55,6 +55,13 @@ public final class UserDtos {
         }
     }
 
+    /** Your own standing: GET /api/me/standing. `suspendedUntil` is set only while SUSPENDED. */
+    public record AccountStanding(Standing standing, Instant suspendedUntil, boolean admin) { }
+
+    /** For moderation only (carries the internal id; never sent to clients as-is). */
+    public record AccountSummary(long id, String handle, String displayName, String bio,
+                                 Standing standing, Instant suspendedUntil) { }
+
     private static String urlOf(User u, MediaStorage media) {
         return u.getAvatarKey() == null ? null : media.publicUrl(u.getAvatarKey());
     }

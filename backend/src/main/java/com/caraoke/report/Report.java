@@ -33,6 +33,13 @@ public class Report {
     @Column(name = "resolved_at")
     private Instant resolvedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 16)
+    private Resolution resolution;
+
+    @Column(name = "resolved_by")
+    private Long resolvedBy;
+
     @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private Instant createdAt;
 
@@ -46,9 +53,6 @@ public class Report {
         this.details = details;
     }
 
-    void resolve(Instant at) {
-        this.resolvedAt = at;
-    }
 
     public Long getId() { return id; }
     public Long getReporterId() { return reporterId; }
@@ -57,5 +61,7 @@ public class Report {
     public ReportReason getReason() { return reason; }
     public String getDetails() { return details; }
     public Instant getResolvedAt() { return resolvedAt; }
+    public Resolution getResolution() { return resolution; }
+    public Long getResolvedBy() { return resolvedBy; }
     public Instant getCreatedAt() { return createdAt; }
 }

@@ -1,6 +1,8 @@
 package com.caraoke.config;
 
+import com.caraoke.auth.AccountGate;
 import com.caraoke.auth.DevUserFilter;
+import org.springframework.beans.factory.ObjectProvider;
 import jakarta.servlet.DispatcherType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +35,8 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             @Value("${app.auth.dev-mode:false}") boolean devMode,
                                             @Value("${app.rate-limit.reads-per-minute:300}") int readsPerMinute,
-                                            @Value("${app.rate-limit.writes-per-minute:30}") int writesPerMinute) throws Exception {
+                                            @Value("${app.rate-limit.writes-per-minute:30}") int writesPerMinute,
+                                            ObjectProvider<AccountGate> accountGate) throws Exception {
         http
             .csrf(csrf -> csrf.disable())                       // no cookies/sessions -> no CSRF surface
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -61,6 +64,11 @@ public class SecurityConfig {
         // After authentication, so limits are per signed-in user (not per shared IP)
         http.addFilterAfter(new RateLimitFilter(new RateLimiter(Clock.systemUTC()), readsPerMinute, writesPerMinute),
                 AnonymousAuthenticationFilter.class);
+        // Suspended/banned accounts. Absent in @WebMvcTest slices (no services loaded), so they skip it.
+        AccountGate gate = accountGate.getIfAvailable();
+        if (gate != null) {
+            http.addFilterAfter(new StandingFilter(gate), AnonymousAuthenticationFilter.class);   // runs after the rate limiter
+        }
         return http.build();
     }
 }

@@ -91,6 +91,8 @@ export type Story = {
   mine: boolean;
   resonanceCount: number;   // how many people "felt this too"
   resonatedByMe: boolean;
+  /** Only on your own stories: 'hidden' = in review after reports, 'removed' = taken down. */
+  review?: 'hidden' | 'removed' | null;
 };
 
 export type ResonanceSummary = {
@@ -166,6 +168,40 @@ export type ReportBody =
   | { kind: 'STORY'; storyId: number; reason: ReportReason; details?: string }
   | { kind: 'USER'; handle: string; reason: ReportReason; details?: string };
 
+export type Standing = 'GOOD' | 'WARNED' | 'SUSPENDED' | 'BANNED';
+
+/** Private to you. suspendedUntil is set only while SUSPENDED. */
+export type AccountStanding = { standing: Standing; suspendedUntil: string | null; admin: boolean };
+
+// ---- Moderation (admins only) ------------------------------------------------
+
+export type ModerationAction = 'DISMISS' | 'STRIKE' | 'BAN';
+
+export type ModeratedPerson = {
+  handle: string;
+  displayName: string;
+  standing: Standing;
+  suspendedUntil: string | null;
+  activeStrikes: number;
+};
+
+export type QueueItem = {
+  kind: 'STORY' | 'USER';
+  firstReportId: number;
+  reporters: number;
+  reasons: ReportReason[];
+  lastReportedAt: string;
+  person: ModeratedPerson | null;
+  story: {
+    id: number; songTitle: string; songArtist: string; body: string;
+    lyricQuote: string | null; status: 'visible' | 'hidden' | 'removed'; createdAt: string;
+  } | null;      // null if the author already deleted it
+  reports: { reason: ReportReason; details: string | null; createdAt: string }[];
+};
+
+export type QueuePage = { items: QueueItem[]; nextCursor: number | null };
+export type ModerationOutcome = { person: ModeratedPerson | null; reportsClosed: number };
+
 export type BlockedAccount = { handle: string; displayName: string; avatarUrl: string | null };
 
 export type FollowState = {
@@ -179,18 +215,23 @@ export type UpdateProfileBody = {
 };
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public code?: string) {
     super(message);
+  }
+
+  /** Suspended or banned: the server refused this before trying it. */
+  get isStanding() {
+    return this.code === 'ACCOUNT_STANDING';
   }
 }
 
-async function readErrorMessage(res: Response): Promise<string> {
+async function readError(res: Response): Promise<ApiError> {
   // Spring returns { status, error, message, ... }; prefer the human-readable message
   try {
     const body = await res.json();
-    return body.message || body.error || `Request failed (${res.status})`;
+    return new ApiError(res.status, body.message || body.error || `Request failed (${res.status})`, body.code);
   } catch {
-    return `Request failed (${res.status})`;
+    return new ApiError(res.status, `Request failed (${res.status})`);
   }
 }
 
@@ -220,7 +261,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
   if (!res.ok) {
-    throw new ApiError(res.status, await readErrorMessage(res));
+    throw await readError(res);
   }
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
@@ -324,4 +365,15 @@ export const api = {
     request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'DELETE' }),
 
   getResonators: (storyId: number) => request<Author[]>(`/api/stories/${storyId}/resonators`),
+
+  myStanding: () => request<AccountStanding>('/api/me/standing'),
+
+  moderationQueue: (after?: number | null) =>
+    request<QueuePage>(`/api/admin/reports${after ? `?after=${after}` : ''}`),
+
+  decideStory: (storyId: number, action: ModerationAction, reason?: ReportReason) =>
+    request<ModerationOutcome>(`/api/admin/stories/${storyId}/decision`, { method: 'POST', body: JSON.stringify({ action, reason }) }),
+
+  decidePerson: (handle: string, action: ModerationAction, reason?: ReportReason) =>
+    request<ModerationOutcome>(`/api/admin/users/${encodeURIComponent(handle)}/decision`, { method: 'POST', body: JSON.stringify({ action, reason }) }),
 };

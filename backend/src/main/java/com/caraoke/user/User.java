@@ -33,6 +33,17 @@ public class User {
     @Column(name = "avatar_key")
     private String avatarKey;          // object-storage key (never a URL); see MediaStorage
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private UserRole role = UserRole.MEMBER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private Standing standing = Standing.GOOD;
+
+    @Column(name = "suspended_until")
+    private Instant suspendedUntil;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -53,6 +64,20 @@ public class User {
         this.termsVersion = version;
         this.termsAcceptedAt = at;
     }
+
+    /** Set by moderation (via UserStandingService). `suspendedUntil` only matters for SUSPENDED. */
+    void changeStanding(Standing standing, Instant suspendedUntil) {
+        this.standing = standing;
+        this.suspendedUntil = standing == Standing.SUSPENDED ? suspendedUntil : null;
+    }
+
+    boolean isBanned() {
+        return standing == Standing.BANNED;
+    }
+
+    public UserRole getRole() { return role; }
+    public Standing getStanding() { return standing; }
+    public Instant getSuspendedUntil() { return suspendedUntil; }
 
     public String getTermsVersion() { return termsVersion; }
     public Instant getTermsAcceptedAt() { return termsAcceptedAt; }

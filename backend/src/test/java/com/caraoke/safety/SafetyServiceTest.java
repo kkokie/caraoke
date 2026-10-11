@@ -1,5 +1,6 @@
 package com.caraoke.safety;
 
+import com.caraoke.moderation.AutoHideService;
 import com.caraoke.report.ReportReason;
 import com.caraoke.report.ReportService;
 import com.caraoke.report.ReportTarget;
@@ -30,11 +31,12 @@ class SafetyServiceTest {
     @Mock UserService users;
     @Mock StoryService stories;
     @Mock ReportService reports;
+    @Mock AutoHideService autoHide;
     SafetyService service;
 
     @BeforeEach
     void setUp() {
-        service = new SafetyService(users, stories, reports);
+        service = new SafetyService(users, stories, reports, autoHide);
     }
 
     @Test
@@ -45,6 +47,17 @@ class SafetyServiceTest {
         service.report("uid-ian", new ReportRequest(Kind.STORY, 20L, null, ReportReason.SPAM, " buy followers "));
 
         verify(reports).file(5L, ReportTarget.STORY, 20L, ReportReason.SPAM, " buy followers ");
+    }
+
+    @Test
+    void storyReportsLetModerationCountReporters() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
+        when(stories.get("uid-ian", 20L)).thenReturn(story(20L, false));
+        when(reports.file(5L, ReportTarget.STORY, 20L, ReportReason.HATE, null)).thenReturn(3L);
+
+        service.report("uid-ian", new ReportRequest(Kind.STORY, 20L, null, ReportReason.HATE, null));
+
+        verify(autoHide).onReported(ReportTarget.STORY, 20L, 3L);
     }
 
     @Test
@@ -66,6 +79,7 @@ class SafetyServiceTest {
         service.report("uid-ian", new ReportRequest(Kind.USER, null, "spammer", ReportReason.IMPERSONATION, null));
 
         verify(reports).file(5L, ReportTarget.USER, 9L, ReportReason.IMPERSONATION, null);
+        verifyNoInteractions(autoHide);                  // people wait for a human, never auto-hidden
     }
 
     @Test

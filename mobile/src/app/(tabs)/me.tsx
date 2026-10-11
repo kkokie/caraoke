@@ -1,3 +1,4 @@
+import { StandingNotice } from '@/features/moderation/StandingNotice';
 import { ProfileScreen } from '@/features/profile/ProfileScreen';
 import { useSession } from '@/features/session/useSession';
 
@@ -5,5 +6,5 @@ import { useSession } from '@/features/session/useSession';
 export default function MyProfileTab() {
   const session = useSession();
   if (session.status !== 'ready') return null;
-  return <ProfileScreen handle={session.profile.handle} edges={['top', 'left', 'right']} />;
+  return <ProfileScreen handle={session.profile.handle} edges={['top', 'left', 'right']} notice={<StandingNotice />} />;
 }

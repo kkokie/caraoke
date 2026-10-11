@@ -1,6 +1,7 @@
 package com.caraoke.safety;
 
 import com.caraoke.common.ApiErrors;
+import com.caraoke.moderation.AutoHideService;
 import com.caraoke.report.ReportService;
 import com.caraoke.report.ReportTarget;
 import com.caraoke.safety.SafetyDtos.ReportRequest;
@@ -10,9 +11,9 @@ import com.caraoke.user.UserService;
 import org.springframework.stereotype.Service;
 
 /**
- * Reporting a story or a person. A composition feature (safety -> user, story, report): it checks
- * the thing exists and that you can see it, then files the report. What happens to reported
- * content (review, auto-hide) is the moderation feature's job.
+ * Reporting a story or a person. A composition feature (safety -> user, story, report, moderation):
+ * it checks the thing exists and that you can see it, files the report, and lets moderation
+ * auto-hide a story once enough different people have reported it.
  */
 @Service
 public class SafetyService {
@@ -20,11 +21,13 @@ public class SafetyService {
     private final UserService users;
     private final StoryService stories;
     private final ReportService reports;
+    private final AutoHideService autoHide;
 
-    public SafetyService(UserService users, StoryService stories, ReportService reports) {
+    public SafetyService(UserService users, StoryService stories, ReportService reports, AutoHideService autoHide) {
         this.users = users;
         this.stories = stories;
         this.reports = reports;
+        this.autoHide = autoHide;
     }
 
     public void report(String authUid, ReportRequest req) {
@@ -39,7 +42,8 @@ public class SafetyService {
         if (req.storyId() == null) throw ApiErrors.badRequest("Which story?");
         StoryView story = stories.get(authUid, req.storyId());          // 404 if it doesn't exist for you
         if (story.mine()) throw ApiErrors.badRequest("That's your own story.");
-        reports.file(reporter, ReportTarget.STORY, story.id(), req.reason(), req.details());
+        long reporters = reports.file(reporter, ReportTarget.STORY, story.id(), req.reason(), req.details());
+        autoHide.onReported(ReportTarget.STORY, story.id(), reporters);
     }
 
     private void reportUser(long reporter, ReportRequest req) {

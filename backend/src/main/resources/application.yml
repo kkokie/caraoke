@@ -37,6 +37,9 @@ management:
         include: health
 
 app:
+  moderation:
+    # A story reported by this many different people is hidden until a moderator decides
+    auto-hide-reporters: ${MODERATION_AUTO_HIDE_REPORTERS:3}
   media:
     # local = files on disk under local-dir, served at /media/** (dev). Prod will use an
     # S3-compatible store (Cloudflare R2) behind a CDN; add that implementation when deploying.

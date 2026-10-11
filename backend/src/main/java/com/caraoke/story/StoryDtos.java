@@ -45,16 +45,29 @@ public final class StoryDtos {
             Instant editedAt,         // null = never edited
             boolean mine,
             long resonanceCount,      // how many people felt this too
-            boolean resonatedByMe) {
+            boolean resonatedByMe,
+            String review) {          // only on your own stories: "hidden" (in review) or "removed"; else null
+
+        public StoryView(long id, long songId, Author author, String body, Integer momentSec, Integer yearOfMemory,
+                         String lyricQuote, String paper, Instant createdAt, Instant editedAt, boolean mine,
+                         long resonanceCount, boolean resonatedByMe) {
+            this(id, songId, author, body, momentSec, yearOfMemory, lyricQuote, paper, createdAt, editedAt, mine,
+                    resonanceCount, resonatedByMe, null);
+        }
 
         static StoryView of(Story s, Author author, boolean mine, ResonanceSummary resonance) {
             return new StoryView(
                     s.getId(), s.getSongId(), author, s.getBody(), s.getMomentSec(),
                     s.getYearOfMemory() == null ? null : s.getYearOfMemory().intValue(),
                     s.getLyricQuote(), s.getPaper().apiValue(),
-                    s.getCreatedAt(), s.getEditedAt(), mine, resonance.count(), resonance.mine());
+                    s.getCreatedAt(), s.getEditedAt(), mine, resonance.count(), resonance.mine(),
+                    mine && !s.isVisible() ? s.getStatus().name().toLowerCase(java.util.Locale.ROOT) : null);
         }
     }
+
+    /** What a moderator sees of a reported story. Carries internal ids: moderation only. */
+    public record ModerationPreview(long id, long authorId, long songId, String body, String lyricQuote,
+                                    StoryStatus status, Instant createdAt) { }
 
     /** A dot on the moments timeline: a 5-second slot starting at `sec`, and how many stories pin it. */
     public record MomentCount(int sec, long stories) { }

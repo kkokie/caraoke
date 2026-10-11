@@ -26,11 +26,14 @@ public class UserService {
     private final MediaStorage media;
 
     private final BlockService blocks;
+    private final BannedAuthUidRepository bannedUids;
 
-    public UserService(UserRepository users, MediaStorage media, BlockService blocks) {
+    public UserService(UserRepository users, MediaStorage media, BlockService blocks,
+                       BannedAuthUidRepository bannedUids) {
         this.users = users;
         this.media = media;
         this.blocks = blocks;
+        this.bannedUids = bannedUids;
     }
 
     @Transactional(readOnly = true)
@@ -45,6 +48,9 @@ public class UserService {
     public PublicProfile createProfile(String authUid, CreateProfileRequest req) {
         if (users.findByAuthUid(authUid).isPresent()) {
             throw ApiErrors.conflict("Profile already exists");
+        }
+        if (bannedUids.existsById(authUid)) {
+            throw ApiErrors.forbidden("This account was banned for breaking the Community Guidelines.");
         }
         if (!Boolean.TRUE.equals(req.confirmedAge())) {
             throw ApiErrors.badRequest("caraoke is for people " + LegalTerms.MINIMUM_AGE + " and older.");
@@ -92,6 +98,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public PublicProfile getByHandle(String rawHandle) {
         return users.findByHandle(HandleRules.normalize(rawHandle))
+                .filter(u -> !u.isBanned())                       // banned accounts are gone from public view
                 .map(this::view)
                 .orElseThrow(() -> ApiErrors.notFound("User not found"));
     }
@@ -137,7 +144,7 @@ public class UserService {
         String handlePrefix = handle.isEmpty() ? "#" : likeEscape(handle);
         var hidden = blocks.hiddenFrom(findUserId(viewerAuthUid).orElse(null));   // blocked either way: not findable
         return users.search(handlePrefix, likeEscape(q), Limit.of(SEARCH_LIMIT)).stream()
-                .filter(u -> !hidden.contains(u.getId()))
+                .filter(u -> !hidden.contains(u.getId()) && !u.isBanned())
                 .map(u -> Author.of(u, media))
                 .toList();
     }
