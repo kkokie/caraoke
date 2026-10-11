@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ReactNode, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Song } from '@/api/client';
 import { Screen } from '@/components/Screen';
@@ -28,6 +28,7 @@ function SongPage({ song }: { song: Song }) {
   const styles = useStyles();
   const { type } = useTheme();
   const compose = () => router.push({ pathname: '/song/[id]/compose', params: { id: String(song.id) } });
+  const [moment, setMoment] = useState<number | null>(null);   // a timeline dot narrows the feed
 
   return (
     <Screen>
@@ -43,12 +44,19 @@ function SongPage({ song }: { song: Song }) {
 
       <PreviewPlayer songId={song.id} />
       <ListenButtons links={song.listen} />
-      <MomentsTimeline songId={song.id} durationSec={song.durationSec} />
+      <MomentsTimeline songId={song.id} durationSec={song.durationSec} selected={moment} onSelect={setMoment} />
 
       <View style={styles.stories}>
-        <Text style={type.label}>STORIES</Text>
+        <View style={styles.storiesHead}>
+          <Text style={type.label}>{moment == null ? 'STORIES' : `STORIES AT ${formatDuration(moment)}`}</Text>
+          {moment != null ? (
+            <Pressable accessibilityRole="button" onPress={() => setMoment(null)} hitSlop={10}>
+              <Text style={styles.showAll}>Show all</Text>
+            </Pressable>
+          ) : null}
+        </View>
         <Button label="Share your story" onPress={compose} />
-        <StoryFeed songId={song.id} />
+        <StoryFeed songId={song.id} moment={moment} />
       </View>
     </Screen>
   );
@@ -65,6 +73,8 @@ const useStyles = makeStyles(({ colors, type }) => ({
   title: { ...type.title, fontSize: 28, lineHeight: 32, textAlign: 'center' },
   center: { textAlign: 'center' },
   stories: { gap: space.md, marginTop: space.sm },
+  storiesHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  showAll: { ...type.label, color: colors.accent },
   centered: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg },
   error: { color: colors.danger, textAlign: 'center' },
 }));

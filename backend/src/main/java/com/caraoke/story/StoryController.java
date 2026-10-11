@@ -25,13 +25,17 @@ public class StoryController {
         return service.post(auth.getName(), songId, req);
     }
 
-    /** Newest first. Pass the previous page's nextCursor as ?before= to keep scrolling. */
+    /**
+     * Newest first. Pass the previous page's nextCursor as ?before= to keep scrolling.
+     * ?moment=130 shows only the stories pinned to that dot on the moments timeline.
+     */
     @GetMapping("/songs/{songId}/stories")
     public StoryPage feed(Authentication auth,
                           @PathVariable long songId,
                           @RequestParam(name = "before", required = false) Long before,
-                          @RequestParam(name = "limit", defaultValue = "20") int limit) {
-        return service.feed(auth.getName(), songId, before, limit);
+                          @RequestParam(name = "limit", defaultValue = "20") int limit,
+                          @RequestParam(name = "moment", required = false) Integer moment) {
+        return service.feed(auth.getName(), songId, before, limit, moment);
     }
 
     /** One story a day: can I share now, and if not, when? */

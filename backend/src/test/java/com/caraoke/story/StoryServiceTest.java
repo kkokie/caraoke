@@ -142,6 +142,28 @@ class StoryServiceTest {
         assertThat(page.nextCursor()).isNull();
     }
 
+    @Test
+    void momentFilterAsksForThatDotsFiveSecondSlot() {
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(stories.findBySongIdAndStatusAndMomentSecBetweenAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(130), eq(134), eq(Long.MAX_VALUE), anyCollection(), any(Limit.class)))
+                .thenReturn(List.of(story(10L, OTHER)));
+        when(users.findAuthors(anySet())).thenReturn(AUTHORS);
+        when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
+
+        StoryPage page = service.feed("uid-ian", SONG_ID, null, 20, 133);      // 2:13 snaps to the 2:10 dot
+
+        assertThat(page.items()).extracting(StoryView::id).containsExactly(10L);
+    }
+
+    @Test
+    void momentCantBeNegative() {
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        assertThatThrownBy(() -> service.feed("uid-ian", SONG_ID, null, 20, -5))
+                .isInstanceOf(org.springframework.web.server.ResponseStatusException.class);
+    }
+
     // ---- delete -------------------------------------------------------------
 
     @Test

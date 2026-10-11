@@ -73,12 +73,21 @@ class StoryControllerTest {
 
     @Test
     void feedPassesCursorAndLimit() throws Exception {
-        when(service.feed("u1", 7L, 42L, 10)).thenReturn(new StoryPage(List.of(STORY), null));
+        when(service.feed("u1", 7L, 42L, 10, null)).thenReturn(new StoryPage(List.of(STORY), null));
 
         mvc.perform(get("/api/songs/7/stories").param("before", "42").param("limit", "10").header(USER, "u1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].body").value("senior year road trip"))
                 .andExpect(jsonPath("$.nextCursor").doesNotExist());
+    }
+
+    @Test
+    void feedPassesTheMoment() throws Exception {
+        when(service.feed("u1", 7L, null, 20, 130)).thenReturn(new StoryPage(List.of(STORY), null));
+
+        mvc.perform(get("/api/songs/7/stories").param("moment", "130").header(USER, "u1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].body").value("senior year road trip"));
     }
 
     @Test

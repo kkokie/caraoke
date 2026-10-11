@@ -18,6 +18,10 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     List<Story> findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
             long songId, StoryStatus status, long beforeId, Collection<Long> hiddenAuthors, Limit limit);
 
+    /** One moment's stories: the 5-second slot [from, to] the dot on the timeline stands for. */
+    List<Story> findBySongIdAndStatusAndMomentSecBetweenAndIdLessThanAndUserIdNotInOrderByIdDesc(
+            long songId, StoryStatus status, int from, int to, long beforeId, Collection<Long> hiddenAuthors, Limit limit);
+
     /** How many stories pin each 5-second slot of a song: the dots on the moments timeline. */
     @Query(value = """
             SELECT (moment_sec / 5) * 5 AS sec, count(*) AS stories FROM stories
