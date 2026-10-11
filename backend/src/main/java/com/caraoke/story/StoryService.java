@@ -70,6 +70,15 @@ public class StoryService {
         return toPage(rows, size, users.findUserId(authUid).orElse(null));
     }
 
+    /** Dots for the moments timeline: how many stories pin each 5-second slot. */
+    @Transactional(readOnly = true)
+    public List<StoryDtos.MomentCount> moments(long songId) {
+        songs.get(songId);                                       // 404 for unknown songs
+        return stories.countMoments(songId).stream()
+                .map(m -> new StoryDtos.MomentCount(m.getSec(), m.getStories()))
+                .toList();
+    }
+
     /** A single story (story page, edit screen). Hidden stories are visible only to their author. */
     @Transactional(readOnly = true)
     public StoryView get(String authUid, long storyId) {

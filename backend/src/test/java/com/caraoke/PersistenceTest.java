@@ -279,6 +279,22 @@ class PersistenceTest {
                 Long.class, userId, songId, body, year);
     }
 
+    // ---- moments --------------------------------------------------------------
+
+    @Test
+    void momentsGroupIntoFiveSecondSlots() {
+        long sam = user("sam"), song = song();
+        long a = story(sam, song), b = story(sam, song), c = story(sam, song);
+        story(sam, song);                                                        // no moment
+        jdbc.update("UPDATE stories SET moment_sec = 131 WHERE id = ?", a);
+        jdbc.update("UPDATE stories SET moment_sec = 134 WHERE id = ?", b);
+        jdbc.update("UPDATE stories SET moment_sec = 40 WHERE id = ?", c);
+
+        assertThat(stories.countMoments(song))
+                .extracting(StoryRepository.MomentCount::getSec, StoryRepository.MomentCount::getStories)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(40, 1L), org.assertj.core.groups.Tuple.tuple(130, 2L));
+    }
+
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----
 
     private long user(String handle) {

@@ -48,3 +48,20 @@ export function LockIcon({ color, size = 14 }: IconProps) {
     </Svg>
   );
 }
+
+export function PlayIcon({ color, size = 20 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Path d="M8 5.5v13l11-6.5z" />
+    </Svg>
+  );
+}
+
+export function PauseIcon({ color, size = 20 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Rect x={6} y={5} width={4} height={14} rx={1} />
+      <Rect x={14} y={5} width={4} height={14} rx={1} />
+    </Svg>
+  );
+}

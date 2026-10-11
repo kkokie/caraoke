@@ -6,6 +6,8 @@ import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { Artwork } from '@/features/songs/Artwork';
 import { ListenButtons } from '@/features/songs/ListenButtons';
+import { MomentsTimeline } from '@/features/songs/MomentsTimeline';
+import { PreviewPlayer } from '@/features/songs/PreviewPlayer';
 import { useSong } from '@/features/songs/useSong';
 import { StoryFeed } from '@/features/stories/StoryFeed';
 import { formatDuration } from '@/lib/format';
@@ -39,7 +41,9 @@ function SongPage({ song }: { song: Song }) {
         </View>
       </View>
 
+      <PreviewPlayer songId={song.id} />
       <ListenButtons links={song.listen} />
+      <MomentsTimeline songId={song.id} durationSec={song.durationSec} />
 
       <View style={styles.stories}>
         <Text style={type.label}>STORIES</Text>
