@@ -41,6 +41,8 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health").permitAll()
                 // Uploaded media (dev: served by this API; prod: CDN). Keys are unguessable UUIDs.
                 .requestMatchers(HttpMethod.GET, "/media/**").permitAll()
+                // Terms, Privacy Policy, Community Guidelines: public pages (the App Store links to them)
+                .requestMatchers(HttpMethod.GET, "/legal/**").permitAll()
                 // Public profiles and handle checks are readable without login
                 .requestMatchers(HttpMethod.GET, "/api/users/*", "/api/handles/*/available").permitAll()
                 .anyRequest().authenticated())

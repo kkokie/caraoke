@@ -48,7 +48,8 @@ curl localhost:8080/api/handles/admin/available                            # res
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/api/me` | yes | Current profile. `404` means the user still needs to pick a handle |
-| POST | `/api/me` | yes | Create public profile (handle, displayName, bio) |
+| POST | `/api/me` | yes | Create public profile `{handle, displayName, bio?, acceptedTerms, confirmedAge}`; both must be `true` (records the terms version) |
+| GET | `/legal/{terms,privacy,guidelines}.html` | no | Public Terms, Privacy Policy, Community Guidelines (linked from the app and the App Store) |
 | PATCH | `/api/me` | yes | Edit displayName / bio |
 | PUT | `/api/me/avatar` | yes | Upload profile photo (multipart field `file`; JPEG/PNG/WebP, ≤5 MB) → profile |
 | DELETE | `/api/me/avatar` | yes | Remove profile photo → profile |

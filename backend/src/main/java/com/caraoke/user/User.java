@@ -24,6 +24,12 @@ public class User {
     @Column(length = 280)
     private String bio;
 
+    @Column(name = "terms_version", length = 16)
+    private String termsVersion;
+
+    @Column(name = "terms_accepted_at")
+    private Instant termsAcceptedAt;
+
     @Column(name = "avatar_key")
     private String avatarKey;          // object-storage key (never a URL); see MediaStorage
 
@@ -41,6 +47,15 @@ public class User {
         this.displayName = displayName;
         this.bio = bio;
     }
+
+    /** Agreed to the Terms + Community Guidelines at this version. */
+    void acceptTerms(String version, Instant at) {
+        this.termsVersion = version;
+        this.termsAcceptedAt = at;
+    }
+
+    public String getTermsVersion() { return termsVersion; }
+    public Instant getTermsAcceptedAt() { return termsAcceptedAt; }
 
     @PrePersist
     void onCreate() {

@@ -4,6 +4,7 @@ import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
 import { AvatarPicker } from '@/features/profile/AvatarPicker';
+import { emailSupport, openLegal } from '@/lib/legal';
 import { MAX_BIO, useEditProfile } from '@/features/profile/useEditProfile';
 import { useSession } from '@/features/session/useSession';
 import { makeStyles, space, useTheme } from '@/theme';
@@ -43,6 +44,14 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
       {form.error ? <Text style={[type.hint, styles.error]}>{form.error}</Text> : null}
       <Button label="Save" onPress={form.save} disabled={!form.canSave} loading={form.saving} />
 
+      <View style={styles.about}>
+        <Text style={type.label}>ABOUT</Text>
+        <Button label="Community Guidelines" variant="ghost" onPress={() => openLegal('guidelines')} />
+        <Button label="Terms of Service" variant="ghost" onPress={() => openLegal('terms')} />
+        <Button label="Privacy Policy" variant="ghost" onPress={() => openLegal('privacy')} />
+        <Button label="Contact support" variant="ghost" onPress={emailSupport} />
+      </View>
+
       <View style={styles.danger}>
         <Text style={type.label}>ACCOUNT</Text>
         <Button label="Delete account" variant="ghost" onPress={form.confirmDeleteAccount} />
@@ -56,5 +65,6 @@ const useStyles = makeStyles(({ colors, type }) => ({
   counter: { color: colors.textMuted, textAlign: 'right' },
   muted: { color: colors.textMuted },
   error: { color: colors.danger, textAlign: 'center' },
+  about: { gap: space.sm, paddingTop: space.lg },
   danger: { marginTop: 'auto', gap: space.sm, paddingTop: space.xl },
 }));
