@@ -31,11 +31,13 @@ public class AuthorStoriesService {
     private final StoryRepository stories;
     private final SongService songs;
     private final ResonanceService resonances;
+    private final StoryPhotos photos;
 
-    public AuthorStoriesService(StoryRepository stories, SongService songs, ResonanceService resonances) {
+    public AuthorStoriesService(StoryRepository stories, SongService songs, ResonanceService resonances, StoryPhotos photos) {
         this.stories = stories;
         this.songs = songs;
         this.resonances = resonances;
+        this.photos = photos;
     }
 
     @Transactional(readOnly = true)
@@ -90,17 +92,20 @@ public class AuthorStoriesService {
     private List<StoryTile> toTiles(List<Story> page) {
         if (page.isEmpty()) return List.of();
         Map<Long, SongSummary> songById = songs.findSummaries(songIds(page));
-        Map<Long, ResonanceSummary> felt = resonances.summaries(page.stream().map(Story::getId).toList(), null);
-        return page.stream().map(s -> toTile(s, songById.get(s.getSongId()), felt)).toList();
+        List<Long> ids = page.stream().map(Story::getId).toList();
+        Map<Long, ResonanceSummary> felt = resonances.summaries(ids, null);
+        Map<Long, StoryDtos.PhotoView> covers = photos.covers(ids);
+        return page.stream().map(s -> toTile(s, songById.get(s.getSongId()), felt, covers.get(s.getId()))).toList();
     }
 
-    private static StoryTile toTile(Story s, SongSummary song, Map<Long, ResonanceSummary> felt) {
+    /** The tile is the story's photo when it has one, else the album cover. */
+    private static StoryTile toTile(Story s, SongSummary song, Map<Long, ResonanceSummary> felt, StoryDtos.PhotoView photo) {
         return new StoryTile(
                 s.getId(),
                 s.getSongId(),
                 song == null ? null : song.title(),
                 song == null ? null : song.artist(),
-                song == null ? null : song.artworkUrl(),     // photos (feat/photos) will take priority here
+                photo != null ? photo.url() : song == null ? null : song.artworkUrl(),
                 felt.getOrDefault(s.getId(), ResonanceSummary.NONE).count());
     }
 

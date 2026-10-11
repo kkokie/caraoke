@@ -46,24 +46,29 @@ public final class StoryDtos {
             boolean mine,
             long resonanceCount,      // how many people felt this too
             boolean resonatedByMe,
-            String review) {          // only on your own stories: "hidden" (in review) or "removed"; else null
+            String review,            // only on your own stories: "hidden" (in review) or "removed"; else null
+            PhotoView photo) {        // the story's photo, or null (then the album art is the cover)
 
         public StoryView(long id, long songId, Author author, String body, Integer momentSec, Integer yearOfMemory,
                          String lyricQuote, String paper, Instant createdAt, Instant editedAt, boolean mine,
                          long resonanceCount, boolean resonatedByMe) {
             this(id, songId, author, body, momentSec, yearOfMemory, lyricQuote, paper, createdAt, editedAt, mine,
-                    resonanceCount, resonatedByMe, null);
+                    resonanceCount, resonatedByMe, null, null);
         }
 
-        static StoryView of(Story s, Author author, boolean mine, ResonanceSummary resonance) {
+        static StoryView of(Story s, Author author, boolean mine, ResonanceSummary resonance, PhotoView photo) {
             return new StoryView(
                     s.getId(), s.getSongId(), author, s.getBody(), s.getMomentSec(),
                     s.getYearOfMemory() == null ? null : s.getYearOfMemory().intValue(),
                     s.getLyricQuote(), s.getPaper().apiValue(),
                     s.getCreatedAt(), s.getEditedAt(), mine, resonance.count(), resonance.mine(),
-                    mine && !s.isVisible() ? s.getStatus().name().toLowerCase(java.util.Locale.ROOT) : null);
+                    mine && !s.isVisible() ? s.getStatus().name().toLowerCase(java.util.Locale.ROOT) : null,
+                    photo);
         }
     }
+
+    /** A photo on a story. Width/height (when known) let the app size it before it loads. */
+    public record PhotoView(String url, Integer width, Integer height) { }
 
     /** What a moderator sees of a reported story. Carries internal ids: moderation only. */
     public record ModerationPreview(long id, long authorId, long songId, String body, String lyricQuote,

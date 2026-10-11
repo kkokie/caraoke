@@ -7,6 +7,7 @@ import { openStoryMenu } from './storyMenu';
 import { timeAgo } from '@/lib/format';
 import { makeStyles, paperOf, radius, space } from '@/theme';
 import { StoryPaper } from './StoryPaper';
+import { StoryPhotoView } from './StoryPhotoView';
 
 // Feeds show a preview; the story page shows everything.
 const PREVIEW_LINES = 8;
@@ -41,6 +42,7 @@ export function StoryCard({ story, onDeleted, expanded = false }: Props) {
       </View>
 
       {story.review ? <ReviewNote review={story.review} /> : null}
+      {story.photo ? <StoryPhotoView photo={story.photo} /> : null}
       <StoryBody story={story} expanded={expanded} />
 
       <ResonateRow story={story} />

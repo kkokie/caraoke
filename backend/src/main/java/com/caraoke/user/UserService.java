@@ -154,6 +154,12 @@ public class UserService {
         return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
+    /** When someone joined (new accounts earn some features, like story photos). */
+    @Transactional(readOnly = true)
+    public Optional<java.time.Instant> joinedAt(long userId) {
+        return users.findById(userId).map(User::getCreatedAt);
+    }
+
     /** Our internal user id for a public @handle. */
     @Transactional(readOnly = true)
     public Optional<Long> findUserIdByHandle(String rawHandle) {

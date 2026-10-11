@@ -35,7 +35,7 @@ class StoryDiscoveryServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new StoryDiscoveryService(stories, new StoryViewAssembler(users, resonances), songs, users, blocks);
+        service = new StoryDiscoveryService(stories, new StoryViewAssembler(users, resonances, org.mockito.Mockito.mock(StoryPhotos.class)), songs, users, blocks);
     }
 
     @Test

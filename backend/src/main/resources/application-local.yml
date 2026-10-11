@@ -2,3 +2,6 @@
 app:
   auth:
     dev-mode: true
+  photos:
+    # Locally, brand-new dev accounts can add story photos right away
+    min-account-age-hours: 0

@@ -60,7 +60,7 @@ class StoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances), dailyLimit, blocks, guard);
+        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances, org.mockito.Mockito.mock(StoryPhotos.class)), dailyLimit, blocks, guard, org.mockito.Mockito.mock(StoryPhotos.class));
     }
 
     // ---- post ---------------------------------------------------------------

@@ -93,7 +93,11 @@ export type Story = {
   resonatedByMe: boolean;
   /** Only on your own stories: 'hidden' = in review after reports, 'removed' = taken down. */
   review?: 'hidden' | 'removed' | null;
+  /** The story's photo (null = the album art is the cover). Sizes may be null for layout. */
+  photo?: StoryPhoto | null;
 };
+
+export type StoryPhoto = { url: string; width: number | null; height: number | null };
 
 export type ResonanceSummary = {
   count: number;
@@ -276,8 +280,8 @@ export function mediaUrl(url: string | null | undefined): string | undefined {
   return /^https?:\/\//.test(url) ? url : `${BASE_URL}${url}`;
 }
 
-/** A local image file to upload. */
-export type LocalImage = { uri: string; name: string; type: string };
+/** A local image file to upload. width/height (px) when known, so others can lay it out before it loads. */
+export type LocalImage = { uri: string; name: string; type: string; width?: number; height?: number };
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   // FormData (uploads) must let fetch set its own multipart boundary
@@ -390,6 +394,15 @@ export const api = {
     request<Story>(`/api/stories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 
   deleteStory: (id: number) => request<void>(`/api/stories/${id}`, { method: 'DELETE' }),
+
+  uploadStoryPhoto: (storyId: number, image: LocalImage) => {
+    const form = new FormData();
+    form.append('file', new File(image.uri) as unknown as Blob, image.name);
+    const size = image.width && image.height ? `?width=${image.width}&height=${image.height}` : '';
+    return request<Story>(`/api/stories/${storyId}/photo${size}`, { method: 'PUT', body: form });
+  },
+
+  removeStoryPhoto: (storyId: number) => request<Story>(`/api/stories/${storyId}/photo`, { method: 'DELETE' }),
 
   resonate: (storyId: number) =>
     request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'PUT' }),

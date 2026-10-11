@@ -50,6 +50,7 @@ class PersistenceTest {
     @Autowired com.caraoke.report.ReportRepository reports;
     @Autowired com.caraoke.moderation.StrikeRepository strikes;
     @Autowired com.caraoke.page.PageRaisedSongRepository raisedSongs;
+    @Autowired com.caraoke.story.StoryMediaRepository storyMedia;
 
     // ---- resonances ---------------------------------------------------------
 
@@ -391,6 +392,32 @@ class PersistenceTest {
         jdbc.update("DELETE FROM stories WHERE id = ?", pinned);
 
         assertThat(jdbc.queryForObject("SELECT pinned_story_id FROM pages WHERE user_id = ?", Long.class, sam)).isNull();
+    }
+
+    // ---- story photos -----------------------------------------------------------
+
+    @Test
+    void coversComeBackForAPageInOneQueryAndGoWithTheirStory() {
+        long sam = user("sam"), song = song();
+        long withPhoto = story(sam, song), without = story(sam, song);
+        jdbc.update("INSERT INTO story_media (story_id, position, storage_key, width, height) VALUES (?, 0, 'stories/a.jpg', 1600, 2000)", withPhoto);
+        jdbc.update("INSERT INTO story_media (story_id, position, storage_key) VALUES (?, 1, 'stories/b.jpg')", withPhoto);   // not the cover
+
+        assertThat(storyMedia.findByStoryIdInAndPosition(List.of(withPhoto, without), (short) 0))
+                .extracting(m -> m.getStorageKey()).containsExactly("stories/a.jpg");
+
+        jdbc.update("DELETE FROM stories WHERE id = ?", withPhoto);
+        assertThat(storyMedia.findByStoryId(withPhoto)).isEmpty();
+    }
+
+    @Test
+    void oneCoverPerStory() {
+        long sam = user("sam"), song = song();
+        long s = story(sam, song);
+        jdbc.update("INSERT INTO story_media (story_id, position, storage_key) VALUES (?, 0, 'stories/a.jpg')", s);
+
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO story_media (story_id, position, storage_key) VALUES (?, 0, 'stories/b.jpg')", s))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     // ---- moderation -------------------------------------------------------------

@@ -21,22 +21,26 @@ class StoryViewAssembler {
 
     private final UserService users;
     private final ResonanceService resonances;
+    private final StoryPhotos photos;
 
-    StoryViewAssembler(UserService users, ResonanceService resonances) {
+    StoryViewAssembler(UserService users, ResonanceService resonances, StoryPhotos photos) {
         this.users = users;
         this.resonances = resonances;
+        this.photos = photos;
     }
 
     List<StoryView> toViews(List<Story> stories, Long viewerId) {
         if (stories.isEmpty()) return List.of();
         Map<Long, Author> authors = users.findAuthors(authorIds(stories));
         Map<Long, ResonanceSummary> felt = resonances.summaries(storyIds(stories), viewerId);
+        Map<Long, StoryDtos.PhotoView> covers = photos.covers(storyIds(stories));
         return stories.stream()
                 .map(s -> StoryView.of(
                         s,
                         authors.get(s.getUserId()),
                         viewerId != null && s.isWrittenBy(viewerId),
-                        felt.getOrDefault(s.getId(), ResonanceSummary.NONE)))
+                        felt.getOrDefault(s.getId(), ResonanceSummary.NONE),
+                        covers.get(s.getId())))
                 .toList();
     }
 
