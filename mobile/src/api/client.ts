@@ -93,7 +93,11 @@ export type Story = {
   resonatedByMe: boolean;
   /** Only on your own stories: 'hidden' = in review after reports, 'removed' = taken down. */
   review?: 'hidden' | 'removed' | null;
+  /** The story's photo (null = the album art is the cover). Sizes may be null for layout. */
+  photo?: StoryPhoto | null;
 };
+
+export type StoryPhoto = { url: string; width: number | null; height: number | null };
 
 export type ResonanceSummary = {
   count: number;
@@ -159,6 +163,36 @@ export type ProfileView = {
   social: { followers: number; following: number; followedByMe: boolean };
   me: boolean;
   blockedByMe: boolean;   // you blocked them: show Unblock, no stories
+};
+
+// ---- Your page (decoration) ---------------------------------------------------
+
+export type PageThemeName = 'PAPER' | 'MIDNIGHT' | 'MEADOW' | 'SUNSET' | 'OCEAN' | 'ROSE';
+export type PageBackgroundName = 'PLAIN' | 'DOTS' | 'LINES' | 'GRID' | 'STARS';
+export type PageTypeName = 'CLASSIC' | 'TYPEWRITER' | 'MODERN';
+export type PageBlockName = 'PAGE_SONG' | 'PINNED_STORY' | 'LIFE_IN_SONGS' | 'RAISED_ME';
+
+/** Someone's page. `blocks` = shown, in their order; empty blocks are skipped when drawn. */
+export type PageView = {
+  theme: PageThemeName;
+  background: PageBackgroundName;
+  type: PageTypeName;
+  blocks: PageBlockName[];
+  pageSong: Song | null;
+  pinnedStory: StoryTile | null;
+  lifeInSongs: { year: number; story: StoryTile }[];
+  raisedMe: SongSummary[];
+};
+
+/** Full replace of your page. Song ids are ours (resolve a search result first). */
+export type PageInput = {
+  theme: PageThemeName;
+  background: PageBackgroundName;
+  type: PageTypeName;
+  pageSongId: number | null;
+  pinnedStoryId: number | null;
+  blocks: PageBlockName[];
+  raisedSongIds: number[];
 };
 
 export type ReportReason =
@@ -246,8 +280,8 @@ export function mediaUrl(url: string | null | undefined): string | undefined {
   return /^https?:\/\//.test(url) ? url : `${BASE_URL}${url}`;
 }
 
-/** A local image file to upload. */
-export type LocalImage = { uri: string; name: string; type: string };
+/** A local image file to upload. width/height (px) when known, so others can lay it out before it loads. */
+export type LocalImage = { uri: string; name: string; type: string; width?: number; height?: number };
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   // FormData (uploads) must let fetch set its own multipart boundary
@@ -316,8 +350,11 @@ export const api = {
 
   getSong: (id: number) => request<Song>(`/api/songs/${id}`),
 
-  getStories: (songId: number, before?: number | null) =>
-    request<StoryPage>(`/api/songs/${songId}/stories${before ? `?before=${before}` : ''}`),
+  /** `moment` = a dot's `sec` on the moments timeline: only stories pinned there. */
+  getStories: (songId: number, before?: number | null, moment?: number | null) => {
+    const q = [before ? `before=${before}` : '', moment != null ? `moment=${moment}` : ''].filter(Boolean).join('&');
+    return request<StoryPage>(`/api/songs/${songId}/stories${q ? `?${q}` : ''}`);
+  },
 
   postStory: (songId: number, body: PostStoryBody) =>
     request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),
@@ -358,6 +395,15 @@ export const api = {
 
   deleteStory: (id: number) => request<void>(`/api/stories/${id}`, { method: 'DELETE' }),
 
+  uploadStoryPhoto: (storyId: number, image: LocalImage) => {
+    const form = new FormData();
+    form.append('file', new File(image.uri) as unknown as Blob, image.name);
+    const size = image.width && image.height ? `?width=${image.width}&height=${image.height}` : '';
+    return request<Story>(`/api/stories/${storyId}/photo${size}`, { method: 'PUT', body: form });
+  },
+
+  removeStoryPhoto: (storyId: number) => request<Story>(`/api/stories/${storyId}/photo`, { method: 'DELETE' }),
+
   resonate: (storyId: number) =>
     request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'PUT' }),
 
@@ -365,6 +411,13 @@ export const api = {
     request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'DELETE' }),
 
   getResonators: (storyId: number) => request<Author[]>(`/api/stories/${storyId}/resonators`),
+
+  getPage: (handle: string) => request<PageView>(`/api/profiles/${encodeURIComponent(handle)}/page`),
+
+  savePage: (body: PageInput) => request<PageView>('/api/me/page', { method: 'PUT', body: JSON.stringify(body) }),
+
+  setPageSong: (songId: number | null) =>
+    request<PageView>('/api/me/page/song', { method: 'PUT', body: JSON.stringify({ songId }) }),
 
   myStanding: () => request<AccountStanding>('/api/me/standing'),
 

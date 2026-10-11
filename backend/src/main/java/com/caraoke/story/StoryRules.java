@@ -62,4 +62,13 @@ final class StoryRules {
         }
         return year.shortValue();
     }
+
+    /** The moments timeline groups pins into 5-second slots; a dot's `sec` is its slot's start. */
+    static final int MOMENT_SLOT_SEC = 5;
+
+    /** Snap any second to the start of its slot (?moment=133 means the 2:10 dot). */
+    static int momentSlot(int sec) {
+        if (sec < 0) throw com.caraoke.common.ApiErrors.badRequest("A moment can't be before the song starts.");
+        return (sec / MOMENT_SLOT_SEC) * MOMENT_SLOT_SEC;
+    }
 }

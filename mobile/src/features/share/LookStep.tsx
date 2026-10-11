@@ -3,6 +3,7 @@ import { PaperName } from '@/api/client';
 import { LockIcon } from '@/components/icons';
 import { Artwork } from '@/features/songs/Artwork';
 import { StoryPaper } from '@/features/stories/StoryPaper';
+import { StoryPhotoView } from '@/features/stories/StoryPhotoView';
 import { makeStyles, paperNames, papers, radius, space, useTheme } from '@/theme';
 import { ShareDraft } from './useShareDraft';
 
@@ -19,6 +20,9 @@ export function LookStep({ draft }: { draft: ShareDraft }) {
             <Text style={styles.songArtist} numberOfLines={1}>{draft.song.artist}</Text>
           </View>
         </View>
+        {draft.photo.hasPhoto
+          ? <StoryPhotoView photo={draft.photo.saved} uri={draft.photo.local?.uri} />
+          : null}
         <StoryPaper
           paper={draft.paper}
           body={draft.body.trim()}
@@ -32,9 +36,10 @@ export function LookStep({ draft }: { draft: ShareDraft }) {
       <View style={styles.section}>
         <Text style={styles.label}>COVER</Text>
         <View style={styles.row}>
-          <Option label="Album art" selected />
-          <Option label="Your photo · soon" disabled />
+          <Option label="Album art" selected={!draft.photo.hasPhoto} onPress={draft.photo.chooseAlbumArt} />
+          <Option label={draft.photo.hasPhoto ? 'Change photo' : 'Your photo'} selected={draft.photo.hasPhoto} onPress={draft.photo.choose} />
         </View>
+        <Text style={styles.hint}>One photo per story. Photos are checked before anyone sees them.</Text>
       </View>
 
       <View style={styles.section}>
@@ -71,16 +76,16 @@ function Swatch({ name, selected, onPick }: { name: PaperName; selected: boolean
   );
 }
 
-function Option({ label, selected, disabled }: { label: string; selected?: boolean; disabled?: boolean }) {
+function Option({ label, selected, onPress }: { label: string; selected?: boolean; onPress: () => void }) {
   const styles = useStyles();
   return (
-    <View
-      accessible
+    <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected: !!selected, disabled: !!disabled }}
-      style={[styles.option, selected && styles.optionOn, disabled && styles.optionOff]}>
+      accessibilityState={{ selected: !!selected }}
+      onPress={onPress}
+      style={[styles.option, selected && styles.optionOn]}>
       <Text style={styles.optionText}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -104,7 +109,6 @@ const useStyles = makeStyles(({ colors, type }) => ({
     justifyContent: 'center',
   },
   optionOn: { borderWidth: 2, borderColor: colors.accent },
-  optionOff: { opacity: 0.45 },
   optionText: { ...type.body, fontSize: 15 },
   swatches: { flexDirection: 'row', gap: space.md, flexWrap: 'wrap' },
   swatch: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

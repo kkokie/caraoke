@@ -15,19 +15,20 @@ const INITIAL: FeedState = { status: 'loading', items: [], nextCursor: null, loa
 /**
  * A song's story feed. Reloads whenever the song page regains focus,
  * so a story you just posted from the composer shows up on return.
+ * `moment` (a timeline dot's second) narrows it to the stories pinned there.
  */
-export function useStoryFeed(songId: number) {
+export function useStoryFeed(songId: number, moment: number | null = null) {
   const [state, setState] = useState<FeedState>(INITIAL);
   const loadingMoreRef = useRef(false);   // guards against double "load more" taps
 
   const refresh = useCallback(async () => {
     try {
-      const page = await api.getStories(songId);
+      const page = await api.getStories(songId, null, moment);
       setState({ status: 'ready', items: page.items, nextCursor: page.nextCursor, loadingMore: false, error: null });
     } catch (e) {
       setState((s) => ({ ...s, status: 'error', error: message(e) }));
     }
-  }, [songId]);
+  }, [songId, moment]);
 
   useFocusEffect(
     useCallback(() => {
@@ -40,7 +41,7 @@ export function useStoryFeed(songId: number) {
     loadingMoreRef.current = true;
     setState((s) => ({ ...s, loadingMore: true }));
     try {
-      const page = await api.getStories(songId, state.nextCursor);
+      const page = await api.getStories(songId, state.nextCursor, moment);
       setState((s) => ({ ...s, items: [...s.items, ...page.items], nextCursor: page.nextCursor, loadingMore: false }));
     } catch (e) {
       setState((s) => ({ ...s, loadingMore: false, error: message(e) }));

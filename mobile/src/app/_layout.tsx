@@ -52,6 +52,7 @@ function RootNavigator() {
         <Stack.Screen name="user/[handle]/followers" options={{ ...pushedScreen, title: 'Followers' }} />
         <Stack.Screen name="user/[handle]/following" options={{ ...pushedScreen, title: 'Following' }} />
         <Stack.Screen name="profile/edit" options={{ ...pushedScreen, title: 'Edit profile' }} />
+        <Stack.Screen name="profile/page" options={{ ...pushedScreen, title: 'Decorate your page' }} />
       </Stack.Protected>
     </Stack>
   );

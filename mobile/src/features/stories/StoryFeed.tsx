@@ -8,10 +8,10 @@ import { useStoryFeed } from './useStoryFeed';
  * The stories section of a song page. Renders inside the page's ScrollView
  * (a plain map, not a nested FlatList), which is fine at v1 page sizes.
  */
-export function StoryFeed({ songId }: { songId: number }) {
+export function StoryFeed({ songId, moment = null }: { songId: number; moment?: number | null }) {
   const styles = useStyles();
   const { colors, type } = useTheme();
-  const feed = useStoryFeed(songId);
+  const feed = useStoryFeed(songId, moment);
 
   if (feed.status === 'loading') return <ActivityIndicator color={colors.accent} style={styles.spacer} />;
   if (feed.status === 'error') {
@@ -21,6 +21,9 @@ export function StoryFeed({ songId }: { songId: number }) {
         <Button label="Try again" variant="ghost" onPress={feed.refresh} />
       </View>
     );
+  }
+  if (feed.items.length === 0 && moment != null) {
+    return <Text style={[type.subtitle, styles.spacer, styles.center]}>No stories at this moment anymore.</Text>;
   }
   if (feed.items.length === 0) {
     return <Text style={[type.subtitle, styles.spacer, styles.center]}>No stories yet. Be the first to share what this song means to you.</Text>;

@@ -36,7 +36,7 @@ class AuthorStoriesServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AuthorStoriesService(stories, songs, resonances);
+        service = new AuthorStoriesService(stories, songs, resonances, org.mockito.Mockito.mock(StoryPhotos.class));
     }
 
     @Test

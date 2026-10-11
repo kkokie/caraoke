@@ -33,10 +33,12 @@ public class StoryService {
     private final DailyShareLimit dailyLimit;
     private final BlockService blocks;
     private final StoryContentGuard guard;
+    private final StoryPhotos photos;
 
     public StoryService(StoryRepository stories, SongService songs, UserService users,
                         StoryViewAssembler views, DailyShareLimit dailyLimit, BlockService blocks,
-                        StoryContentGuard guard) {
+                        StoryContentGuard guard, StoryPhotos photos) {
+        this.photos = photos;
         this.blocks = blocks;
         this.guard = guard;
         this.stories = stories;
@@ -70,13 +72,27 @@ public class StoryService {
 
     @Transactional(readOnly = true)
     public StoryPage feed(String authUid, long songId, Long beforeId, int requestedSize) {
+        return feed(authUid, songId, beforeId, requestedSize, null);
+    }
+
+    /** `moment` (seconds) narrows the feed to that dot on the moments timeline (its 5-second slot). */
+    @Transactional(readOnly = true)
+    public StoryPage feed(String authUid, long songId, Long beforeId, int requestedSize, Integer moment) {
         songs.get(songId);                                       // 404 for unknown songs, not an empty feed
         int size = clampPageSize(requestedSize);
         Long viewerId = users.findUserId(authUid).orElse(null);
-        List<Story> rows = stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
-                songId, StoryStatus.VISIBLE, beforeId == null ? Long.MAX_VALUE : beforeId,
-                BlockService.notInList(blocks.hiddenFrom(viewerId)), Limit.of(size + 1));
+        long before = beforeId == null ? Long.MAX_VALUE : beforeId;
+        List<Long> hidden = BlockService.notInList(blocks.hiddenFrom(viewerId));
+        List<Story> rows = moment == null
+                ? stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                        songId, StoryStatus.VISIBLE, before, hidden, Limit.of(size + 1))
+                : momentRows(songId, StoryRules.momentSlot(moment), before, hidden, size + 1);
         return toPage(rows, size, viewerId);
+    }
+
+    private List<Story> momentRows(long songId, int slot, long before, List<Long> hidden, int limit) {
+        return stories.findBySongIdAndStatusAndMomentSecBetweenAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                songId, StoryStatus.VISIBLE, slot, slot + StoryRules.MOMENT_SLOT_SEC - 1, before, hidden, Limit.of(limit));
     }
 
     /** Dots for the moments timeline: how many stories pin each 5-second slot. */
@@ -118,7 +134,8 @@ public class StoryService {
     @Transactional
     public void delete(String authUid, long storyId) {
         Story story = requireOwnStory(storyId, requireProfile(authUid));
-        stories.delete(story);                                   // resonances/replies cascade in the DB
+        photos.deleteFilesOf(story.getId());                     // files go once the delete commits
+        stories.delete(story);                                   // resonances, replies, photo rows cascade in the DB
     }
 
     // ---- helpers ---------------------------------------------------------------

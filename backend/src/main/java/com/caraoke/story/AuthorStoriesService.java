@@ -7,6 +7,7 @@ import com.caraoke.song.SongService;
 import com.caraoke.story.StoryDtos.AuthorStats;
 import com.caraoke.story.StoryDtos.StoryTile;
 import com.caraoke.story.StoryDtos.StoryTilePage;
+import com.caraoke.story.StoryDtos.YearTile;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +31,13 @@ public class AuthorStoriesService {
     private final StoryRepository stories;
     private final SongService songs;
     private final ResonanceService resonances;
+    private final StoryPhotos photos;
 
-    public AuthorStoriesService(StoryRepository stories, SongService songs, ResonanceService resonances) {
+    public AuthorStoriesService(StoryRepository stories, SongService songs, ResonanceService resonances, StoryPhotos photos) {
         this.stories = stories;
         this.songs = songs;
         this.resonances = resonances;
+        this.photos = photos;
     }
 
     @Transactional(readOnly = true)
@@ -62,6 +65,23 @@ public class AuthorStoriesService {
         return toTiles(ordered);
     }
 
+    /** "My life in songs": up to 60 stories that have a memory year, oldest memory first. */
+    @Transactional(readOnly = true)
+    public List<YearTile> lifeInSongs(long authorId) {
+        List<Story> rows = stories.findTop60ByUserIdAndStatusAndYearOfMemoryNotNullOrderByYearOfMemoryAscIdAsc(
+                authorId, StoryStatus.VISIBLE);
+        List<StoryTile> tiles = toTiles(rows);
+        return java.util.stream.IntStream.range(0, rows.size())
+                .mapToObj(i -> new YearTile(rows.get(i).getYearOfMemory(), tiles.get(i)))
+                .toList();
+    }
+
+    /** Whether this is one of the author's own stories that others can see (for pinning). */
+    @Transactional(readOnly = true)
+    public boolean isVisibleStoryBy(long authorId, long storyId) {
+        return stories.existsByIdAndUserIdAndStatus(storyId, authorId, StoryStatus.VISIBLE);
+    }
+
     /** Header numbers: how many stories, and how many times people felt them. */
     @Transactional(readOnly = true)
     public AuthorStats stats(long authorId) {
@@ -72,17 +92,20 @@ public class AuthorStoriesService {
     private List<StoryTile> toTiles(List<Story> page) {
         if (page.isEmpty()) return List.of();
         Map<Long, SongSummary> songById = songs.findSummaries(songIds(page));
-        Map<Long, ResonanceSummary> felt = resonances.summaries(page.stream().map(Story::getId).toList(), null);
-        return page.stream().map(s -> toTile(s, songById.get(s.getSongId()), felt)).toList();
+        List<Long> ids = page.stream().map(Story::getId).toList();
+        Map<Long, ResonanceSummary> felt = resonances.summaries(ids, null);
+        Map<Long, StoryDtos.PhotoView> covers = photos.covers(ids);
+        return page.stream().map(s -> toTile(s, songById.get(s.getSongId()), felt, covers.get(s.getId()))).toList();
     }
 
-    private static StoryTile toTile(Story s, SongSummary song, Map<Long, ResonanceSummary> felt) {
+    /** The tile is the story's photo when it has one, else the album cover. */
+    private static StoryTile toTile(Story s, SongSummary song, Map<Long, ResonanceSummary> felt, StoryDtos.PhotoView photo) {
         return new StoryTile(
                 s.getId(),
                 s.getSongId(),
                 song == null ? null : song.title(),
                 song == null ? null : song.artist(),
-                song == null ? null : song.artworkUrl(),     // photos (feat/photos) will take priority here
+                photo != null ? photo.url() : song == null ? null : song.artworkUrl(),
                 felt.getOrDefault(s.getId(), ResonanceSummary.NONE).count());
     }
 
