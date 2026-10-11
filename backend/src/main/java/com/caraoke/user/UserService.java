@@ -1,5 +1,6 @@
 package com.caraoke.user;
 
+import com.caraoke.block.BlockService;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.media.MediaCleanup;
 import com.caraoke.media.MediaStorage;
@@ -24,9 +25,12 @@ public class UserService {
     private final UserRepository users;
     private final MediaStorage media;
 
-    public UserService(UserRepository users, MediaStorage media) {
+    private final BlockService blocks;
+
+    public UserService(UserRepository users, MediaStorage media, BlockService blocks) {
         this.users = users;
         this.media = media;
+        this.blocks = blocks;
     }
 
     @Transactional(readOnly = true)
@@ -124,14 +128,16 @@ public class UserService {
      * scraping the directory one letter at a time unrewarding.
      */
     @Transactional(readOnly = true)
-    public List<Author> searchPeople(String rawQuery) {
+    public List<Author> searchPeople(String viewerAuthUid, String rawQuery) {
         String q = rawQuery == null ? "" : rawQuery.strip().toLowerCase(Locale.ROOT);
         if (q.startsWith("@")) q = q.substring(1);
         if (q.length() < 2) return List.of();
         String handle = q.replaceAll("[^a-z0-9_]", "");
         // '#' can't appear in a handle, so a query with no handle characters matches names only
         String handlePrefix = handle.isEmpty() ? "#" : likeEscape(handle);
+        var hidden = blocks.hiddenFrom(findUserId(viewerAuthUid).orElse(null));   // blocked either way: not findable
         return users.search(handlePrefix, likeEscape(q), Limit.of(SEARCH_LIMIT)).stream()
+                .filter(u -> !hidden.contains(u.getId()))
                 .map(u -> Author.of(u, media))
                 .toList();
     }

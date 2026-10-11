@@ -30,11 +30,12 @@ class StoryResonanceServiceTest {
     @Mock StoryRepository stories;
     @Mock ResonanceService resonances;
     @Mock UserService users;
+    @Mock com.caraoke.block.BlockService blocks;
     StoryResonanceService service;
 
     @BeforeEach
     void setUp() {
-        service = new StoryResonanceService(stories, resonances, users);
+        service = new StoryResonanceService(stories, resonances, users, blocks);
     }
 
     @Test
@@ -90,14 +91,28 @@ class StoryResonanceServiceTest {
                 IAN, new Author("ian", "Ian", null),
                 7L, new Author("jo", "Jo", null)));
 
-        assertThat(service.resonators(20L)).extracting(Author::handle).containsExactly("jo", "ian");
+        assertThat(service.resonators("uid-ian", 20L)).extracting(Author::handle).containsExactly("jo", "ian");
+    }
+
+    @Test
+    void blockedAuthorsStoriesCantBeFeltAndBlockedPeopleDontShowAsResonators() {
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(stories.findById(20L)).thenReturn(Optional.of(story(20L, SAM)));
+        when(blocks.eitherBlocked(IAN, SAM)).thenReturn(true);
+        assertStatus(() -> service.resonate("uid-ian", 20L), 404);
+
+        when(blocks.hiddenFrom(IAN)).thenReturn(java.util.Set.of(7L));
+        when(resonances.recentResonatorIds(20L, StoryResonanceService.RESONATOR_LIMIT)).thenReturn(List.of(7L, 8L));
+        when(users.findAuthors(List.of(8L))).thenReturn(Map.of(8L, new Author("lee", "Lee", null)));
+        assertThat(service.resonators("uid-ian", 20L)).extracting(Author::handle).containsExactly("lee");
+        verify(resonances, never()).add(anyLong(), anyLong());
     }
 
     @Test
     void resonatorsOfMissingStoryIs404() {
         when(stories.findById(anyLong())).thenReturn(Optional.empty());
 
-        assertStatus(() -> service.resonators(1L), 404);
+        assertStatus(() -> service.resonators("uid-ian", 1L), 404);
     }
 
     private static Story story(long id, long authorId) {

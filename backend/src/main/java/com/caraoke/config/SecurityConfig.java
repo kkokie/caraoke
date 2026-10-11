@@ -14,6 +14,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 
+import java.time.Clock;
+
 /**
  * Stateless API security.
  *
@@ -29,7 +31,9 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                            @Value("${app.auth.dev-mode:false}") boolean devMode) throws Exception {
+                                            @Value("${app.auth.dev-mode:false}") boolean devMode,
+                                            @Value("${app.rate-limit.reads-per-minute:300}") int readsPerMinute,
+                                            @Value("${app.rate-limit.writes-per-minute:30}") int writesPerMinute) throws Exception {
         http
             .csrf(csrf -> csrf.disable())                       // no cookies/sessions -> no CSRF surface
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -54,6 +58,9 @@ public class SecurityConfig {
         } else {
             http.oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()));
         }
+        // After authentication, so limits are per signed-in user (not per shared IP)
+        http.addFilterAfter(new RateLimitFilter(new RateLimiter(Clock.systemUTC()), readsPerMinute, writesPerMinute),
+                AnonymousAuthenticationFilter.class);
         return http.build();
     }
 }

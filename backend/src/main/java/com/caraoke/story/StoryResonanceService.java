@@ -1,5 +1,6 @@
 package com.caraoke.story;
 
+import com.caraoke.block.BlockService;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.resonance.ResonanceService;
 import com.caraoke.resonance.ResonanceSummary;
@@ -24,8 +25,10 @@ public class StoryResonanceService {
     private final StoryRepository stories;
     private final ResonanceService resonances;
     private final UserService users;
+    private final BlockService blocks;
 
-    public StoryResonanceService(StoryRepository stories, ResonanceService resonances, UserService users) {
+    public StoryResonanceService(StoryRepository stories, ResonanceService resonances, UserService users, BlockService blocks) {
+        this.blocks = blocks;
         this.stories = stories;
         this.resonances = resonances;
         this.users = users;
@@ -36,6 +39,7 @@ public class StoryResonanceService {
         long userId = requireProfile(authUid);
         Story story = requireVisible(storyId);
         if (story.isWrittenBy(userId)) throw ApiErrors.badRequest("That's your own story.");
+        if (blocks.eitherBlocked(userId, story.getUserId())) throw ApiErrors.notFound("Story not found");
         return resonances.add(userId, storyId);
     }
 
@@ -47,9 +51,12 @@ public class StoryResonanceService {
 
     /** The people who felt it too, newest first. This is how you find "your people". */
     @Transactional(readOnly = true)
-    public List<Author> resonators(long storyId) {
+    public List<Author> resonators(String viewerAuthUid, long storyId) {
         requireVisible(storyId);
-        List<Long> ids = resonances.recentResonatorIds(storyId, RESONATOR_LIMIT);
+        var hidden = blocks.hiddenFrom(users.findUserId(viewerAuthUid).orElse(null));
+        List<Long> ids = resonances.recentResonatorIds(storyId, RESONATOR_LIMIT).stream()
+                .filter(id -> !hidden.contains(id))
+                .toList();
         Map<Long, Author> authors = users.findAuthors(ids);
         return ids.stream().map(authors::get).filter(Objects::nonNull).toList();   // keep newest-first order
     }

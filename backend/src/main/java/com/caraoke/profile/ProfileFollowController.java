@@ -29,12 +29,12 @@ public class ProfileFollowController {
     }
 
     @GetMapping("/followers")
-    public List<Author> followers(@PathVariable String handle) {
-        return service.followers(handle);
+    public List<Author> followers(Authentication auth, @PathVariable String handle) {
+        return service.followers(auth.getName(), handle);
     }
 
     @GetMapping("/following")
-    public List<Author> following(@PathVariable String handle) {
-        return service.following(handle);
+    public List<Author> following(Authentication auth, @PathVariable String handle) {
+        return service.following(auth.getName(), handle);
     }
 }

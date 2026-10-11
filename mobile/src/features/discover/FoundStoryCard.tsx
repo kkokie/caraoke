@@ -6,7 +6,7 @@ import { StoryCard } from '@/features/stories/StoryCard';
 import { makeStyles, space } from '@/theme';
 
 /** A story found away from its song page: the song it's about sits on top and opens the song. */
-export function FoundStoryCard({ found }: { found: FoundStory }) {
+export function FoundStoryCard({ found, onRemoved }: { found: FoundStory; onRemoved?: (id: number) => void }) {
   const styles = useStyles();
   const { song, story } = found;
   const openSong = () => router.push({ pathname: '/song/[id]', params: { id: String(story.songId) } });
@@ -21,7 +21,7 @@ export function FoundStoryCard({ found }: { found: FoundStory }) {
           </Text>
         </Pressable>
       ) : null}
-      <StoryCard story={story} />
+      <StoryCard story={story} onDeleted={onRemoved} />
     </View>
   );
 }

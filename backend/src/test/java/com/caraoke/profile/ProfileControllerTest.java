@@ -41,7 +41,7 @@ class ProfileControllerTest {
     @Test
     void profileHeader() throws Exception {
         PublicProfile sam = new PublicProfile("sam", "Sam", null, null, Instant.parse("2026-10-01T00:00:00Z"));
-        when(service.profile("u1", "sam")).thenReturn(new ProfileView(sam, new AuthorStats(3, 12), new SocialView(40, 7, true), false));
+        when(service.profile("u1", "sam")).thenReturn(new ProfileView(sam, new AuthorStats(3, 12), new SocialView(40, 7, true), false, false));
 
         mvc.perform(get("/api/profiles/sam").header(USER, "u1"))
                 .andExpect(status().isOk())
@@ -55,7 +55,7 @@ class ProfileControllerTest {
 
     @Test
     void gridPassesCursor() throws Exception {
-        when(service.stories("sam", 40L, 30)).thenReturn(new StoryTilePage(
+        when(service.stories("u1", "sam", 40L, 30)).thenReturn(new StoryTilePage(
                 List.of(new StoryTile(30L, 7L, "Mr. Brightside", "The Killers", "https://art", 4)), 30L));
 
         mvc.perform(get("/api/profiles/sam/stories").param("before", "40").header(USER, "u1"))

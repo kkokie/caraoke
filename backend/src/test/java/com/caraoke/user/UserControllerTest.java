@@ -100,7 +100,7 @@ class UserControllerTest {
     void peopleSearchNeedsSignInAndReturnsAuthors() throws Exception {
         mvc.perform(get("/api/search/people").param("q", "maya")).andExpect(status().isUnauthorized());
 
-        when(service.searchPeople("maya")).thenReturn(List.of(new Author("maya_k", "Maya", null)));
+        when(service.searchPeople("u1", "maya")).thenReturn(List.of(new Author("maya_k", "Maya", null)));
         mvc.perform(get("/api/search/people").param("q", "maya").header("X-Dev-User", "u1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].handle").value("maya_k"));

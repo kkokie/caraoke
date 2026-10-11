@@ -43,7 +43,12 @@ export default function YearScreen() {
         keyExtractor={(f) => String(f.story.id)}
         contentContainerStyle={styles.list}
         ListHeaderComponent={<Text style={styles.title}>Stories from <Text style={styles.accent}>{year}</Text></Text>}
-        renderItem={({ item }) => <FoundStoryCard found={item} />}
+        renderItem={({ item }) => (
+          <FoundStoryCard
+            found={item}
+            onRemoved={(id) => setState((s) => ({ ...s, items: s.items.filter((f) => f.story.id !== id) }))}
+          />
+        )}
         onEndReached={() => state.next && !state.loading && load(state.next)}
         onEndReachedThreshold={0.5}
         ListFooterComponent={state.loading ? <ActivityIndicator color={colors.accent} /> : null}

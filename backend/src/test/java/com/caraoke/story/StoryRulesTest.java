@@ -21,8 +21,8 @@ class StoryRulesTest {
     void bodyMustHaveTextAndFitTheLimit() {
         assertBadRequest(() -> StoryRules.body("   "));
         assertBadRequest(() -> StoryRules.body(null));
-        assertBadRequest(() -> StoryRules.body("x".repeat(StoryRules.MAX_BODY + 1)));
-        assertThat(StoryRules.body("x".repeat(StoryRules.MAX_BODY))).hasSize(StoryRules.MAX_BODY);
+        assertBadRequest(() -> StoryRules.body("ab".repeat(StoryRules.MAX_BODY / 2) + "c"));
+        assertThat(StoryRules.body("ab".repeat(StoryRules.MAX_BODY / 2))).hasSize(StoryRules.MAX_BODY);
     }
 
     @Test
@@ -61,8 +61,8 @@ class StoryRulesTest {
         assertThat(StoryRules.lyric("“we were static on the radio”")).isEqualTo("we were static on the radio");
         assertThat(StoryRules.lyric("\"don't stop\"")).isEqualTo("don't stop");
         assertThat(StoryRules.lyric("'Cause I'm leavin'")).isEqualTo("'Cause I'm leavin'");   // apostrophes are lyrics
-        assertThat(StoryRules.lyric("x".repeat(StoryRules.MAX_LYRIC))).hasSize(StoryRules.MAX_LYRIC);
-        assertBadRequest(() -> StoryRules.lyric("x".repeat(StoryRules.MAX_LYRIC + 1)));
+        assertThat(StoryRules.lyric("ab".repeat(StoryRules.MAX_LYRIC / 2))).hasSize(StoryRules.MAX_LYRIC);
+        assertBadRequest(() -> StoryRules.lyric("ab".repeat(StoryRules.MAX_LYRIC / 2) + "c"));
     }
 
     @Test
