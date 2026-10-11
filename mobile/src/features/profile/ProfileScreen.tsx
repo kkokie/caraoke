@@ -3,24 +3,38 @@ import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
-import { makeStyles, space, useTheme } from '@/theme';
+import { PageView } from '@/api/client';
+import { PageBackdrop } from '@/features/page/PageBackdrop';
+import { PageBlocks } from '@/features/page/PageBlocks';
+import { usePage } from '@/features/page/usePage';
+import { makeStyles, pageTheme, space, ThemeScope, useTheme } from '@/theme';
 import { GridTab, GridTabs } from './GridTabs';
 import { ProfileHeader } from './ProfileHeader';
 import { StoryTile } from './StoryTile';
 import { useFeltTiles } from './useFeltTiles';
 import { useProfile } from './useProfile';
 
-/**
- * The whole profile page (header + 3-column grid). Used by both the Profile tab (you)
- * and /user/[handle] (anyone else). On your own profile, a Stories | Felt switcher
- * shows the stories you resonated with (private to you).
- */
-export function ProfileScreen({ handle, edges = ['left', 'right'], notice }: {
+type ScreenProps = {
   handle: string;
   edges?: ('top' | 'left' | 'right' | 'bottom')[];
   /** Shown above the header (your own page: account standing). */
   notice?: ReactNode;
-}) {
+};
+
+/**
+ * The whole profile page (header, their decorated blocks, then the 3-column grid). Used by both
+ * the Profile tab (you) and /user/[handle] (anyone else). The page's theme and type pairing
+ * restyle everything inside it. On your own profile, a Stories | Felt switcher shows the stories
+ * you resonated with (private to you).
+ */
+export function ProfileScreen(props: ScreenProps) {
+  const { scheme } = useTheme();
+  const { page } = usePage(props.handle);
+  const body = <ProfileBody {...props} page={page} />;
+  if (!page) return body;
+  return <ThemeScope theme={pageTheme(page.theme, page.type, scheme)}>{body}</ThemeScope>;
+}
+function ProfileBody({ handle, edges = ['left', 'right'], notice, page }: ScreenProps & { page: PageView | null }) {
   const styles = useStyles();
   const { colors, type } = useTheme();
   const p = useProfile(handle);
@@ -54,6 +68,7 @@ export function ProfileScreen({ handle, edges = ['left', 'right'], notice }: {
 
   return (
     <SafeAreaView style={styles.safe} edges={edges}>
+      {page ? <PageBackdrop background={page.background} /> : null}
       <FlatList
         data={grid.tiles}
         keyExtractor={(t) => String(t.storyId)}
@@ -63,6 +78,7 @@ export function ProfileScreen({ handle, edges = ['left', 'right'], notice }: {
           <View style={styles.header}>
             {notice}
             <ProfileHeader profile={profile} onChanged={p.refresh} />
+            {page && !profile.blockedByMe ? <PageBlocks page={page} /> : null}
             {profile.me ? <GridTabs tab={tab} onChange={selectTab} /> : null}
           </View>
         }

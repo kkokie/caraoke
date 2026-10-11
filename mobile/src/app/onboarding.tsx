@@ -4,6 +4,7 @@ import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
 import { ConsentChecks } from '@/features/onboarding/ConsentChecks';
 import { HandleStatusLine } from '@/features/onboarding/HandleStatusLine';
+import { PageSongStep } from '@/features/onboarding/PageSongStep';
 import { useOnboardingForm } from '@/features/onboarding/useOnboardingForm';
 import { makeStyles, space, useTheme } from '@/theme';
 
@@ -11,6 +12,7 @@ export default function OnboardingScreen() {
   const styles = useStyles();
   const { type } = useTheme();
   const form = useOnboardingForm();
+  if (form.created) return <PageSongStep onDone={form.finish} />;
 
   return (
     <Screen>

@@ -161,6 +161,36 @@ export type ProfileView = {
   blockedByMe: boolean;   // you blocked them: show Unblock, no stories
 };
 
+// ---- Your page (decoration) ---------------------------------------------------
+
+export type PageThemeName = 'PAPER' | 'MIDNIGHT' | 'MEADOW' | 'SUNSET' | 'OCEAN' | 'ROSE';
+export type PageBackgroundName = 'PLAIN' | 'DOTS' | 'LINES' | 'GRID' | 'STARS';
+export type PageTypeName = 'CLASSIC' | 'TYPEWRITER' | 'MODERN';
+export type PageBlockName = 'PAGE_SONG' | 'PINNED_STORY' | 'LIFE_IN_SONGS' | 'RAISED_ME';
+
+/** Someone's page. `blocks` = shown, in their order; empty blocks are skipped when drawn. */
+export type PageView = {
+  theme: PageThemeName;
+  background: PageBackgroundName;
+  type: PageTypeName;
+  blocks: PageBlockName[];
+  pageSong: Song | null;
+  pinnedStory: StoryTile | null;
+  lifeInSongs: { year: number; story: StoryTile }[];
+  raisedMe: SongSummary[];
+};
+
+/** Full replace of your page. Song ids are ours (resolve a search result first). */
+export type PageInput = {
+  theme: PageThemeName;
+  background: PageBackgroundName;
+  type: PageTypeName;
+  pageSongId: number | null;
+  pinnedStoryId: number | null;
+  blocks: PageBlockName[];
+  raisedSongIds: number[];
+};
+
 export type ReportReason =
   | 'SPAM' | 'HARASSMENT' | 'HATE' | 'SEXUAL' | 'VIOLENCE' | 'SELF_HARM' | 'IMPERSONATION' | 'OTHER';
 
@@ -368,6 +398,13 @@ export const api = {
     request<ResonanceSummary>(`/api/stories/${storyId}/resonance`, { method: 'DELETE' }),
 
   getResonators: (storyId: number) => request<Author[]>(`/api/stories/${storyId}/resonators`),
+
+  getPage: (handle: string) => request<PageView>(`/api/profiles/${encodeURIComponent(handle)}/page`),
+
+  savePage: (body: PageInput) => request<PageView>('/api/me/page', { method: 'PUT', body: JSON.stringify(body) }),
+
+  setPageSong: (songId: number | null) =>
+    request<PageView>('/api/me/page/song', { method: 'PUT', body: JSON.stringify({ songId }) }),
 
   myStanding: () => request<AccountStanding>('/api/me/standing'),
 

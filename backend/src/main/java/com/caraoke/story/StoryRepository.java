@@ -35,6 +35,11 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
         long getStories();
     }
 
+    /** "My life in songs": an author's stories by memory year, oldest memory first. Backed by idx_stories_user_year. */
+    List<Story> findTop60ByUserIdAndStatusAndYearOfMemoryNotNullOrderByYearOfMemoryAscIdAsc(long userId, StoryStatus status);
+
+    boolean existsByIdAndUserIdAndStatus(long id, long userId, StoryStatus status);
+
     /** One author's stories for their profile grid. Backed by idx_stories_user_feed. */
     List<Story> findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
             long userId, StoryStatus status, long beforeId, Limit limit);

@@ -26,6 +26,7 @@ function EditProfileForm({ profile }: { profile: PublicProfile }) {
   return (
     <Screen>
       <AvatarPicker profile={profile} />
+      <Button label="Decorate your page" variant="ghost" onPress={() => router.push('/profile/page')} />
       <TextField
         label="Handle"
         prefix="@"

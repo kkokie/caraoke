@@ -7,6 +7,7 @@ import com.caraoke.song.SongService;
 import com.caraoke.story.StoryDtos.AuthorStats;
 import com.caraoke.story.StoryDtos.StoryTile;
 import com.caraoke.story.StoryDtos.StoryTilePage;
+import com.caraoke.story.StoryDtos.YearTile;
 import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +61,23 @@ public class AuthorStoriesService {
                 .collect(Collectors.toMap(Story::getId, s -> s));
         List<Story> ordered = storyIds.stream().map(byId::get).filter(Objects::nonNull).toList();
         return toTiles(ordered);
+    }
+
+    /** "My life in songs": up to 60 stories that have a memory year, oldest memory first. */
+    @Transactional(readOnly = true)
+    public List<YearTile> lifeInSongs(long authorId) {
+        List<Story> rows = stories.findTop60ByUserIdAndStatusAndYearOfMemoryNotNullOrderByYearOfMemoryAscIdAsc(
+                authorId, StoryStatus.VISIBLE);
+        List<StoryTile> tiles = toTiles(rows);
+        return java.util.stream.IntStream.range(0, rows.size())
+                .mapToObj(i -> new YearTile(rows.get(i).getYearOfMemory(), tiles.get(i)))
+                .toList();
+    }
+
+    /** Whether this is one of the author's own stories that others can see (for pinning). */
+    @Transactional(readOnly = true)
+    public boolean isVisibleStoryBy(long authorId, long storyId) {
+        return stories.existsByIdAndUserIdAndStatus(storyId, authorId, StoryStatus.VISIBLE);
     }
 
     /** Header numbers: how many stories, and how many times people felt them. */

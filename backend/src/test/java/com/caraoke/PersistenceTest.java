@@ -49,6 +49,7 @@ class PersistenceTest {
     @Autowired com.caraoke.block.BlockRepository blocks;
     @Autowired com.caraoke.report.ReportRepository reports;
     @Autowired com.caraoke.moderation.StrikeRepository strikes;
+    @Autowired com.caraoke.page.PageRaisedSongRepository raisedSongs;
 
     // ---- resonances ---------------------------------------------------------
 
@@ -352,6 +353,44 @@ class PersistenceTest {
         assertThat(ids(stories.findBySongIdAndStatusAndMomentSecBetweenAndIdLessThanAndUserIdNotInOrderByIdDesc(
                 song, StoryStatus.VISIBLE, 130, 134, Long.MAX_VALUE, List.of(-1L), Limit.of(10))))
                 .containsExactly(b, a);
+    }
+
+    // ---- my page ----------------------------------------------------------------
+
+    @Test
+    void lifeInSongsIsOldestMemoryFirstAndSkipsStoriesWithoutAYear() {
+        long sam = user("sam"), song = song();
+        long y2009 = storyWith(sam, song, "prom", 2009), y1998 = storyWith(sam, song, "first cd", 1998);
+        storyWith(sam, song, "no year", null);
+        long hidden = storyWith(sam, song, "hidden", 2001);
+        jdbc.update("UPDATE stories SET status = 'HIDDEN' WHERE id = ?", hidden);
+
+        assertThat(ids(stories.findTop60ByUserIdAndStatusAndYearOfMemoryNotNullOrderByYearOfMemoryAscIdAsc(sam, StoryStatus.VISIBLE)))
+                .containsExactly(y1998, y2009);
+    }
+
+    @Test
+    void raisedSongsComeBackInOrderAndReplaceCleanly() {
+        long sam = user("sam");
+        long a = song(), b = song(), c = song();
+        jdbc.update("INSERT INTO page_raised_songs (user_id, position, song_id) VALUES (?, 0, ?), (?, 1, ?)", sam, b, sam, a);
+
+        assertThat(raisedSongs.findByUserIdOrderByPositionAsc(sam)).extracting(r -> r.getSongId()).containsExactly(b, a);
+
+        raisedSongs.deleteAllForUser(sam);
+        jdbc.update("INSERT INTO page_raised_songs (user_id, position, song_id) VALUES (?, 0, ?)", sam, c);
+        assertThat(raisedSongs.findByUserIdOrderByPositionAsc(sam)).extracting(r -> r.getSongId()).containsExactly(c);
+    }
+
+    @Test
+    void deletingAPinnedStoryUnpinsIt() {
+        long sam = user("sam"), song = song();
+        long pinned = story(sam, song);
+        jdbc.update("INSERT INTO pages (user_id, pinned_story_id) VALUES (?, ?)", sam, pinned);
+
+        jdbc.update("DELETE FROM stories WHERE id = ?", pinned);
+
+        assertThat(jdbc.queryForObject("SELECT pinned_story_id FROM pages WHERE user_id = ?", Long.class, sam)).isNull();
     }
 
     // ---- moderation -------------------------------------------------------------

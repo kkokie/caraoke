@@ -89,6 +89,9 @@ public final class StoryDtos {
 
     public record StoryTilePage(List<StoryTile> items, Long nextCursor) { }
 
+    /** A stop on "my life in songs": the year the memory is from, and the story. */
+    public record YearTile(int year, StoryTile story) { }
+
     /** Totals shown in a profile header. */
     public record AuthorStats(long stories, long felt) { }
 }
