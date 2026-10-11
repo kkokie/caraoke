@@ -316,8 +316,11 @@ export const api = {
 
   getSong: (id: number) => request<Song>(`/api/songs/${id}`),
 
-  getStories: (songId: number, before?: number | null) =>
-    request<StoryPage>(`/api/songs/${songId}/stories${before ? `?before=${before}` : ''}`),
+  /** `moment` = a dot's `sec` on the moments timeline: only stories pinned there. */
+  getStories: (songId: number, before?: number | null, moment?: number | null) => {
+    const q = [before ? `before=${before}` : '', moment != null ? `moment=${moment}` : ''].filter(Boolean).join('&');
+    return request<StoryPage>(`/api/songs/${songId}/stories${q ? `?${q}` : ''}`);
+  },
 
   postStory: (songId: number, body: PostStoryBody) =>
     request<Story>(`/api/songs/${songId}/stories`, { method: 'POST', body: JSON.stringify(body) }),

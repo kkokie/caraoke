@@ -340,6 +340,20 @@ class PersistenceTest {
                 ian, com.caraoke.report.ReportTarget.STORY, target)).isTrue();
     }
 
+    @Test
+    void momentFeedKeepsOnlyThatSlot() {
+        long sam = user("sam"), song = song();
+        long a = story(sam, song), b = story(sam, song), c = story(sam, song), d = story(sam, song);
+        jdbc.update("UPDATE stories SET moment_sec = 130 WHERE id = ?", a);
+        jdbc.update("UPDATE stories SET moment_sec = 134 WHERE id = ?", b);
+        jdbc.update("UPDATE stories SET moment_sec = 135 WHERE id = ?", c);   // next dot over
+        // d has no moment
+
+        assertThat(ids(stories.findBySongIdAndStatusAndMomentSecBetweenAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                song, StoryStatus.VISIBLE, 130, 134, Long.MAX_VALUE, List.of(-1L), Limit.of(10))))
+                .containsExactly(b, a);
+    }
+
     // ---- moderation -------------------------------------------------------------
 
     @Test
