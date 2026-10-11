@@ -111,6 +111,15 @@ export type PostStoryBody = {
   paper?: PaperName;
 };
 
+/** A song as Discover shows it next to a story found away from its song page. */
+export type SongSummary = { id: number; title: string; artist: string; artworkUrl: string | null };
+
+/** Discover: a story found away from its song page carries its song with it. */
+export type FoundStory = { story: Story; song: SongSummary | null };
+export type FoundStoryPage = { items: FoundStory[]; nextCursor: number | null };
+export type YearCount = { year: number; stories: number };
+export type SongWithCount = { song: SongSummary; stories: number };
+
 /** One story a day: can you share now, and if not, when (ISO time). */
 export type ShareQuota = { canShare: boolean; nextShareAt: string | null };
 
@@ -253,6 +262,19 @@ export const api = {
   getStory: (id: number) => request<Story>(`/api/stories/${id}`),
 
   getShareQuota: () => request<ShareQuota>('/api/stories/quota'),
+
+  /** A random good story you haven't seen this session; undefined when there's nothing left (204). */
+  dig: (exclude: number[]) =>
+    request<FoundStory | undefined>(`/api/discover/dig${exclude.length ? `?exclude=${exclude.join(',')}` : ''}`),
+
+  discoverYears: () => request<YearCount[]>('/api/discover/years'),
+
+  storiesFromYear: (year: number, before?: number | null) =>
+    request<FoundStoryPage>(`/api/discover/years/${year}${before ? `?before=${before}` : ''}`),
+
+  songsFullOfStories: () => request<SongWithCount[]>('/api/discover/songs'),
+
+  searchPeople: (q: string) => request<Author[]>(`/api/search/people?q=${encodeURIComponent(q)}`),
 
   /** Full replace: omitted moment/year are cleared. */
   editStory: (id: number, body: PostStoryBody) =>

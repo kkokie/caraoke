@@ -12,7 +12,7 @@ Core loop (v1):
 - **Moments:** a story can pin to a timestamp in the song ("2:14, the bridge…") and a year the memory is from.
 - **Sharing is the core feature** (`features/share`, 3 steps): moment + year → the lyric line (optional, typed from memory, ≤120 chars, shown in the lyric font) + the story → how it looks (album-art cover, paper color). Stories print on their author's paper (`theme/papers.ts`, same in light and dark).
 - **One story a day** (rolling 24h, `DailyShareLimit`; edits don't count). Fewer, more genuine stories.
-- **Treasure hunting, not a social network:** never push people to follow; no feed filters or ranking yet.
+- **Treasure hunting, not a social network:** never push people to follow; no feed filters or ranking yet. Discover (`StoryDiscoveryService`) is dig again (random story over a quality floor, never repeating in a session), dig through the years, songs full of stories, and one search for songs and people.
 - **"I felt this too" (resonance):** the v1 connection mechanic. People connect by recognizing the same stories.
 
 **Following** (followers/following, Follow button) is in. Out of scope for v1: DMs, playlists.
@@ -60,7 +60,7 @@ Car constraints (checked Oct 2026), which shape the design:
 - Cross-cutting code lives in `config/`, `auth/`, `common/`.
 - **Dependencies between features point one way, with no cycles.** Example: `story` → `resonance`. The resonance feature only stores and counts; the story feature owns the rules (visible, not your own) and the endpoints.
 - **Pages that combine features get their own composition feature on top.** Example: `profile` → `user` + `story` + `follow` (user can't call story, because story already calls user).
-  Current graph: `profile → user, story, follow, resonance` · `story → user, song, resonance` · `user, song, resonance, follow → (nothing)`. `media` is infrastructure (like `common/`): any feature may use it, it uses none.
+  Current graph: `profile → user, story, follow, resonance` · `story → user, song, resonance` (incl. Discover) · `user, song, resonance, follow → (nothing)`. `media` is infrastructure (like `common/`): any feature may use it, it uses none.
 - **Tests:** unit tests (Mockito) for services, `@WebMvcTest` for controllers, and `PersistenceTest` (Testcontainers Postgres) for anything with real SQL: native queries, projections, keyset paging. Booting it also proves Flyway and entity mappings agree.
 - Entities reference other features' rows **by id only** (e.g. `Story.userId`, `Story.songId`), no cross-feature JPA relations. Cross-feature reads go through a service method that returns a DTO (e.g. `UserService.findAuthors` → `Author`).
 - Feeds use **keyset pagination** (`?before=<id>`, fetch `size+1` to detect more), not offset paging. When ordering isn't by id (e.g. "stories I felt" by resonance time), use an **opaque cursor** carrying the sort key plus a tiebreaker (`FeltCursor` = createdAt + storyId).

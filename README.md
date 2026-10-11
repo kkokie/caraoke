@@ -61,6 +61,11 @@ curl localhost:8080/api/handles/admin/available                            # res
 | GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
 | POST | `/api/songs/{id}/stories` | yes | Share a story `{body, momentSec?, yearOfMemory?, lyricQuote? (≤120), paper? (cream/dusk/sage/ink)}`. **One per rolling 24h** → `429` with when to come back |
 | GET | `/api/stories/quota` | yes | `{canShare, nextShareAt}` for the one-a-day rule |
+| GET | `/api/discover/dig?exclude=1,2` | yes | One random good story (80+ chars, not yours, not in `exclude`) with its song → `{story, song}`; `204` when nothing's left |
+| GET | `/api/discover/years` | yes | Years that have stories, newest first → `[{year, stories}]` |
+| GET | `/api/discover/years/{year}?before=` | yes | That year's stories with their songs, keyset paged |
+| GET | `/api/discover/songs` | yes | Songs full of stories (top 10 by story count) → `[{song, stories}]` |
+| GET | `/api/search/people?q=` | yes | People by @handle prefix or name (2+ chars, max 20) → `Author[]` |
 | GET | `/api/stories/{id}` | yes | One story (hidden ones only for their author) |
 | PUT | `/api/stories/{id}` | yes | Edit your story: full replace of `{body, momentSec?, yearOfMemory?, lyricQuote?}` (`paper` omitted = unchanged); sets `editedAt`; doesn't count toward the daily story |
 | DELETE | `/api/stories/{id}` | yes | Delete your own story |

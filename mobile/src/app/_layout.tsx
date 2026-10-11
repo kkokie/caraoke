@@ -44,6 +44,7 @@ function RootNavigator() {
         <Stack.Screen name="story/[id]/felt" options={{ ...pushedScreen, title: 'Felt this too' }} />
         <Stack.Screen name="story/[id]/index" options={{ ...pushedScreen, title: 'Story' }} />
         <Stack.Screen name="story/[id]/edit" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen name="year/[year]" options={{ ...pushedScreen, title: '' }} />
         <Stack.Screen name="user/[handle]/index" options={{ ...pushedScreen, title: '' }} />
         <Stack.Screen name="user/[handle]/followers" options={{ ...pushedScreen, title: 'Followers' }} />
         <Stack.Screen name="user/[handle]/following" options={{ ...pushedScreen, title: 'Following' }} />

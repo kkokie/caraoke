@@ -29,7 +29,7 @@ export function PeopleList({ state, header, empty }: Props) {
   );
 }
 
-function PersonRow({ person }: { person: Author }) {
+export function PersonRow({ person }: { person: Author }) {
   const styles = useStyles();
   const open = () => router.push({ pathname: '/user/[handle]', params: { handle: person.handle } });
   return (

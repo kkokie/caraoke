@@ -7,6 +7,8 @@ import { SongRow } from '@/features/songs/SongRow';
 import { useOpenSong } from '@/features/songs/useOpenSong';
 import { ComeBackTomorrow } from '@/features/share/ShareFlow';
 import { useShareQuota } from '@/features/share/useShareQuota';
+import { PersonRow } from '@/features/people/PeopleList';
+import { usePeopleSearch } from '@/features/people/usePeopleSearch';
 import { SongSearchState, useSongSearch } from '@/features/songs/useSongSearch';
 import { makeStyles, space, useTheme } from '@/theme';
 
@@ -19,6 +21,7 @@ export default function SearchScreen() {
   const { open, openingId } = useOpenSong(sharing ? 'share' : 'browse');
   const quota = useShareQuota(sharing);   // from the + tab: say "tomorrow" before they pick a song
   const items = search.kind === 'results' ? search.items : [];
+  const people = usePeopleSearch(query, !sharing);   // browsing finds people too; sharing is about a song
 
   if (quota.kind === 'used') {
     return (
@@ -34,10 +37,10 @@ export default function SearchScreen() {
       {sharing ? <Stack.Screen options={{ title: 'Share a story' }} /> : null}
       <View style={styles.searchBox}>
         <TextField
-          label={sharing ? 'Which song is it about?' : 'Find a song'}
+          label={sharing ? 'Which song is it about?' : 'Search'}
           value={query}
           onChangeText={setQuery}
-          placeholder="Title or artist"
+          placeholder={sharing ? 'Title or artist' : 'A song, an artist, or @someone'}
           autoFocus
           autoCorrect={false}
           returnKeyType="search"
@@ -53,7 +56,14 @@ export default function SearchScreen() {
         renderItem={({ item }) => (
           <SongRow song={item} loading={openingId === item.appleId} onPress={() => open(item)} />
         )}
-        ListEmptyComponent={<SearchEmptyState state={search} />}
+        ListHeaderComponent={people.length > 0 ? (
+          <View style={styles.people}>
+            <Text style={styles.label}>PEOPLE</Text>
+            {people.slice(0, 3).map((p) => <PersonRow key={p.handle} person={p} />)}
+            {items.length > 0 ? <Text style={styles.label}>SONGS</Text> : null}
+          </View>
+        ) : null}
+        ListEmptyComponent={people.length > 0 ? null : <SearchEmptyState state={search} />}
       />
     </SafeAreaView>
   );
@@ -75,6 +85,8 @@ const useStyles = makeStyles(({ colors, type }) => ({
   safe: { flex: 1, backgroundColor: colors.bg },
   searchBox: { paddingHorizontal: space.lg, paddingTop: space.md },
   list: { paddingHorizontal: space.lg, paddingBottom: space.xl },
+  people: { gap: space.xs, paddingTop: space.sm },
+  label: { ...type.label, marginTop: space.sm },
   empty: { marginTop: space.xl, textAlign: 'center' },
   error: { color: colors.danger },
 }));

@@ -45,6 +45,7 @@ class PersistenceTest {
     @Autowired ResonanceRepository resonances;
     @Autowired StoryRepository stories;
     @Autowired FollowRepository follows;
+    @Autowired com.caraoke.user.UserRepository users;
 
     // ---- resonances ---------------------------------------------------------
 
@@ -220,6 +221,62 @@ class PersistenceTest {
 
         assertThat(page1.stream().map(r -> r.getId().getStoryId()).toList()).containsExactly(c, b);   // tie -> higher id first
         assertThat(page2.stream().map(r -> r.getId().getStoryId()).toList()).containsExactly(a);
+    }
+
+    // ---- discover -----------------------------------------------------------
+
+    private static final String LONG = "x".repeat(100);   // over the 80-char dig floor
+
+    @Test
+    void digFindsOnlyRealStoriesNotYoursAndNotAlreadySeen() {
+        long ian = user("ian"), sam = user("sam"), song = song();
+        storyWith(sam, song, "too short", null);                       // under the quality floor
+        storyWith(ian, song, LONG, null);                              // the viewer's own
+        long seen = storyWith(sam, song, LONG, null);
+        long fresh = storyWith(sam, song, LONG, null);
+
+        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "}")).get().extracting(Story::getId).isEqualTo(fresh);
+        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "," + fresh + "}")).isEmpty();
+        assertThat(stories.findRandomForDig(-1L, 80, "{}")).isPresent();       // signed-out viewer id
+    }
+
+    @Test
+    void yearsAndSongsFullOfStoriesCountOnlyVisible() {
+        long ian = user("ian"), a = song(), b = song();
+        storyWith(ian, a, LONG, 2009);
+        storyWith(ian, a, LONG, 2009);
+        storyWith(ian, b, LONG, 1998);
+        long hidden = storyWith(ian, b, LONG, 1998);
+        jdbc.update("UPDATE stories SET status = 'HIDDEN' WHERE id = ?", hidden);
+
+        assertThat(stories.countByYear()).extracting(StoryRepository.YearCount::getYear, StoryRepository.YearCount::getStories)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(2009, 2L), org.assertj.core.groups.Tuple.tuple(1998, 1L));
+        assertThat(stories.topSongs(10)).extracting(StoryRepository.SongCount::getSongId).containsExactly(a, b);
+        assertThat(ids(stories.findByYearOfMemoryAndStatusAndIdLessThanOrderByIdDesc(
+                (short) 1998, StoryStatus.VISIBLE, Long.MAX_VALUE, Limit.of(10)))).hasSize(1);
+    }
+
+    @Test
+    void peopleSearchMatchesHandlePrefixOrNameAndTreatsWildcardsLiterally() {
+        long maya = user("maya_k");
+        jdbc.update("UPDATE users SET display_name = 'Maya Kim' WHERE id = ?", maya);
+        user("mayor");
+        user("sam");
+
+        assertThat(handles(users.search("maya\\_", "maya\\_", Limit.of(20)))).containsExactly("maya_k");
+        assertThat(handles(users.search("may", "may", Limit.of(20)))).containsExactly("maya_k", "mayor");
+        assertThat(handles(users.search("#", "kim", Limit.of(20)))).containsExactly("maya_k");   // name only
+        assertThat(handles(users.search("\\%", "\\%", Limit.of(20)))).isEmpty();              // "%" is not a wildcard
+    }
+
+    private static List<String> handles(List<com.caraoke.user.User> rows) {
+        return rows.stream().map(com.caraoke.user.User::getHandle).toList();
+    }
+
+    private long storyWith(long userId, long songId, String body, Integer year) {
+        return jdbc.queryForObject(
+                "INSERT INTO stories (user_id, song_id, body, year_of_memory) VALUES (?, ?, ?, ?) RETURNING id",
+                Long.class, userId, songId, body, year);
     }
 
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----
