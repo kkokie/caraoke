@@ -46,6 +46,12 @@ public class UserService {
         if (users.findByAuthUid(authUid).isPresent()) {
             throw ApiErrors.conflict("Profile already exists");
         }
+        if (!Boolean.TRUE.equals(req.confirmedAge())) {
+            throw ApiErrors.badRequest("caraoke is for people " + LegalTerms.MINIMUM_AGE + " and older.");
+        }
+        if (!Boolean.TRUE.equals(req.acceptedTerms())) {
+            throw ApiErrors.badRequest("Please agree to the Terms and Community Guidelines to continue.");
+        }
         String handle = HandleRules.normalize(req.handle());
         String problem = HandleRules.validate(handle);
         if (problem != null) {
@@ -55,7 +61,9 @@ public class UserService {
             throw ApiErrors.conflict("That handle is taken");
         }
         try {
-            User saved = users.saveAndFlush(new User(authUid, handle, req.displayName().trim(), blankToNull(req.bio())));
+            User user = new User(authUid, handle, req.displayName().trim(), blankToNull(req.bio()));
+            user.acceptTerms(LegalTerms.CURRENT_VERSION, java.time.Instant.now());
+            User saved = users.saveAndFlush(user);
             return view(saved);
         } catch (DataIntegrityViolationException race) {
             // Two people grabbed the same handle at the same moment; the unique index wins

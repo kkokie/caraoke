@@ -63,7 +63,7 @@ class UserControllerTest {
 
         mvc.perform(post("/api/me").header("X-Dev-User", "uid-123")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"handle\":\"ian\",\"displayName\":\"Ian\"}"))
+                        .content("{\"handle\":\"ian\",\"displayName\":\"Ian\",\"acceptedTerms\":true,\"confirmedAge\":true}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.handle").value("ian"));
     }

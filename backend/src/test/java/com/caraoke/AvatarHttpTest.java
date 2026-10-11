@@ -52,7 +52,7 @@ class AvatarHttpTest {
         HttpHeaders me = new HttpHeaders();
         me.add("X-Dev-User", "uid-photo");
         me.setContentType(MediaType.APPLICATION_JSON);
-        http.exchange("/api/me", HttpMethod.POST, new HttpEntity<>("{\"handle\":\"photogenic\",\"displayName\":\"P\"}", me), String.class);
+        http.exchange("/api/me", HttpMethod.POST, new HttpEntity<>("{\"handle\":\"photogenic\",\"displayName\":\"P\",\"acceptedTerms\":true,\"confirmedAge\":true}", me), String.class);
 
         ResponseEntity<String> uploaded = http.exchange("/api/me/avatar", HttpMethod.PUT, multipart(PNG), String.class);
         assertThat(uploaded.getStatusCode().value()).isEqualTo(200);

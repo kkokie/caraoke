@@ -11,10 +11,21 @@ public final class UserDtos {
 
     private UserDtos() { }
 
+    /**
+     * Sign-up. `acceptedTerms` = agreed to the Terms + Community Guidelines (LegalTerms.CURRENT_VERSION);
+     * `confirmedAge` = is 13 or older. Both must be true.
+     */
     public record CreateProfileRequest(
             @NotBlank String handle,
             @NotBlank @Size(max = 50) String displayName,
-            @Size(max = 280) String bio) { }
+            @Size(max = 280) String bio,
+            Boolean acceptedTerms,
+            Boolean confirmedAge) {
+
+        public CreateProfileRequest(String handle, String displayName, String bio) {
+            this(handle, displayName, bio, null, null);
+        }
+    }
 
     /** Profile photo changes go through PUT/DELETE /api/me/avatar (uploads), never a client-supplied URL. */
     public record UpdateProfileRequest(

@@ -40,6 +40,8 @@ export type CreateProfileBody = {
   handle: string;
   displayName: string;
   bio?: string;
+  acceptedTerms: boolean;   // Terms + Community Guidelines
+  confirmedAge: boolean;    // 13 or older
 };
 
 /** A catalog hit from search. Not saved on our side until someone opens it. */
@@ -190,6 +192,11 @@ async function readErrorMessage(res: Response): Promise<string> {
   } catch {
     return `Request failed (${res.status})`;
   }
+}
+
+/** A full URL on our API server (e.g. the public /legal pages). */
+export function apiUrl(path: string): string {
+  return `${BASE_URL}${path}`;
 }
 
 /** Media URLs from the API may be relative ("/media/…" in dev); make them loadable. */

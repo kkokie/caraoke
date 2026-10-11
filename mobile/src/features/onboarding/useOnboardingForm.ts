@@ -13,11 +13,13 @@ export function useOnboardingForm() {
   const [handle, setHandle] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [over13, setOver13] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleStatus = useHandleAvailability(handle);
-  const canSubmit = handleStatus.kind === 'available' && displayName.trim().length > 0 && !submitting;
+  const canSubmit = handleStatus.kind === 'available' && displayName.trim().length > 0 && over13 && agreed && !submitting;
 
   async function submit() {
     if (!canSubmit) return;
@@ -28,6 +30,8 @@ export function useOnboardingForm() {
         handle: normalizeHandle(handle),
         displayName: displayName.trim(),
         bio: bio.trim() || undefined,
+        acceptedTerms: agreed,
+        confirmedAge: over13,
       });
       completeOnboarding(profile);   // router guard moves us to /home
     } catch (e) {
@@ -43,6 +47,7 @@ export function useOnboardingForm() {
     setDisplayName: (v: string) => setDisplayName(v.slice(0, MAX_NAME)),
     setBio: (v: string) => setBio(v.slice(0, MAX_BIO)),
     limits: { MAX_NAME, MAX_BIO },
+    consent: { over13, setOver13, agreed, setAgreed },
     handleStatus,
     canSubmit,
     submitting,

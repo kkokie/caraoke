@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { TextField } from '@/components/TextField';
 import { Button } from '@/components/Button';
+import { ConsentChecks } from '@/features/onboarding/ConsentChecks';
 import { HandleStatusLine } from '@/features/onboarding/HandleStatusLine';
 import { useOnboardingForm } from '@/features/onboarding/useOnboardingForm';
 import { makeStyles, space, useTheme } from '@/theme';
@@ -48,6 +49,8 @@ export default function OnboardingScreen() {
         style={styles.bio}
         footer={<Text style={[type.hint, styles.counter]}>{form.fields.bio.length}/{form.limits.MAX_BIO}</Text>}
       />
+
+      <ConsentChecks {...form.consent} />
 
       <View style={styles.footer}>
         {form.submitError ? <Text style={[type.hint, styles.error]}>{form.submitError}</Text> : null}

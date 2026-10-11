@@ -49,10 +49,19 @@ class HttpErrorsTest {
         HttpHeaders headers = devUser("uid-someone");
         headers.add("Content-Type", "application/json");
         ResponseEntity<String> res = http.exchange("/api/me", HttpMethod.POST,
-                new HttpEntity<>("{\"handle\":\"admin\",\"displayName\":\"A\"}", headers), String.class);
+                new HttpEntity<>("{\"handle\":\"admin\",\"displayName\":\"A\",\"acceptedTerms\":true,\"confirmedAge\":true}", headers), String.class);
 
         assertThat(res.getStatusCode().value()).isEqualTo(400);
         assertThat(res.getBody()).contains("reserved");
+    }
+
+    @Test
+    void legalPagesArePublic() {
+        for (String page : new String[] {"terms", "privacy", "guidelines"}) {
+            ResponseEntity<String> res = http.getForEntity("/legal/" + page + ".html", String.class);
+            assertThat(res.getStatusCode().value()).isEqualTo(200);
+            assertThat(res.getBody()).contains("caraoke");
+        }
     }
 
     private ResponseEntity<String> get(String path, String devUid) {
