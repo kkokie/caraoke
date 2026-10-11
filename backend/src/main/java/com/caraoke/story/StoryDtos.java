@@ -56,6 +56,9 @@ public final class StoryDtos {
         }
     }
 
+    /** A dot on the moments timeline: a 5-second slot starting at `sec`, and how many stories pin it. */
+    public record MomentCount(int sec, long stories) { }
+
     /** One page of a feed. Pass nextCursor back as ?before= to get the next page; null = no more. */
     public record StoryPage(List<StoryView> items, Long nextCursor) { }
 

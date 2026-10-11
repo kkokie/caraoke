@@ -62,6 +62,8 @@ curl localhost:8080/api/handles/admin/available                            # res
 | GET | `/api/songs/{id}/stories?before=&limit=` | yes | Song's story feed, newest first. Keyset paging: pass `nextCursor` as `before` |
 | POST | `/api/songs/{id}/stories` | yes | Share a story `{body, momentSec?, yearOfMemory?, lyricQuote? (≤120), paper? (cream/dusk/sage/ink)}`. **One per rolling 24h** → `429` with when to come back |
 | GET | `/api/stories/quota` | yes | `{canShare, nextShareAt}` for the one-a-day rule |
+| GET | `/api/songs/{id}/preview` | yes | Apple's 30s preview to **stream** `{url, attribution}`; `204` if none. Looked up live, kept in memory 6h, never stored |
+| GET | `/api/songs/{id}/moments` | yes | Moments timeline dots: `[{sec, stories}]` per 5-second slot |
 | GET | `/api/discover/dig?exclude=1,2` | yes | One random good story (80+ chars, not yours, not in `exclude`) with its song → `{story, song}`; `204` when nothing's left |
 | GET | `/api/discover/years` | yes | Years that have stories, newest first → `[{year, stories}]` |
 | GET | `/api/discover/years/{year}?before=` | yes | That year's stories with their songs, keyset paged |

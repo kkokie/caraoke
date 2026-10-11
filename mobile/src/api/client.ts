@@ -122,6 +122,11 @@ export type FoundStoryPage = { items: FoundStory[]; nextCursor: number | null };
 export type YearCount = { year: number; stories: number };
 export type SongWithCount = { song: SongSummary; stories: number };
 
+export type SongPreview = { url: string; attribution: string };
+
+/** A dot on the moments timeline: a 5-second slot starting at `sec`. */
+export type MomentCount = { sec: number; stories: number };
+
 /** One story a day: can you share now, and if not, when (ISO time). */
 export type ShareQuota = { canShare: boolean; nextShareAt: string | null };
 
@@ -279,6 +284,11 @@ export const api = {
   getStory: (id: number) => request<Story>(`/api/stories/${id}`),
 
   getShareQuota: () => request<ShareQuota>('/api/stories/quota'),
+
+  /** Apple's 30-second clip to stream (never download or save); undefined when there isn't one. */
+  getPreview: (songId: number) => request<SongPreview | undefined>(`/api/songs/${songId}/preview`),
+
+  getMoments: (songId: number) => request<MomentCount[]>(`/api/songs/${songId}/moments`),
 
   /** A random good story you haven't seen this session; undefined when there's nothing left (204). */
   dig: (exclude: number[]) =>

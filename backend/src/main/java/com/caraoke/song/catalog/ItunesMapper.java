@@ -21,7 +21,8 @@ final class ItunesMapper {
                 upscaleArtwork(t.artworkUrl100()),
                 toSeconds(t.trackTimeMillis()),
                 toDate(t.releaseDate()),
-                "Various Artists".equalsIgnoreCase(t.collectionArtistName()));
+                "Various Artists".equalsIgnoreCase(t.collectionArtistName()),
+                t.previewUrl());
     }
 
     static LocalDate toDate(String iso) {
