@@ -1,5 +1,8 @@
 package com.caraoke.song.catalog;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+
 /** Converts iTunes wire records into our provider-neutral CatalogTrack. */
 final class ItunesMapper {
 
@@ -16,7 +19,18 @@ final class ItunesMapper {
                 t.artistName(),
                 t.collectionName(),
                 upscaleArtwork(t.artworkUrl100()),
-                toSeconds(t.trackTimeMillis()));
+                toSeconds(t.trackTimeMillis()),
+                toDate(t.releaseDate()),
+                "Various Artists".equalsIgnoreCase(t.collectionArtistName()));
+    }
+
+    static LocalDate toDate(String iso) {
+        if (iso == null || iso.length() < 10) return null;
+        try {
+            return LocalDate.parse(iso.substring(0, 10));
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     static String upscaleArtwork(String url) {

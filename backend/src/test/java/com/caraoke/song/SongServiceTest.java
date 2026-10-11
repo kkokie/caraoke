@@ -41,7 +41,7 @@ class SongServiceTest {
 
     @Test
     void searchTrimsQueryAndMapsResults() {
-        when(catalog.search("killers", SongService.SEARCH_LIMIT)).thenReturn(List.of(BRIGHTSIDE));
+        when(catalog.search("killers", SongService.SEARCH_FETCH)).thenReturn(List.of(BRIGHTSIDE));
 
         List<SearchResult> results = service.search("  killers ");
 

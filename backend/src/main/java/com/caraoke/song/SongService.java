@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ public class SongService {
 
     static final int MAX_QUERY_LENGTH = 100;
     static final int SEARCH_LIMIT = 25;
+    static final int SEARCH_FETCH = 50;     // fetch more than we show, then re-rank (see SearchRanker)
 
     private final SongRepository songs;
     private final CatalogClient catalog;
@@ -36,7 +38,9 @@ public class SongService {
 
     public List<SearchResult> search(String rawQuery) {
         String query = requireQuery(rawQuery);
-        return fromCatalog(() -> catalog.search(query, SEARCH_LIMIT)).stream()
+        List<CatalogTrack> hits = fromCatalog(() -> catalog.search(query, SEARCH_FETCH));
+        Set<String> opened = hits.isEmpty() ? Set.of() : songs.findAppleIdsIn(hits.stream().map(CatalogTrack::appleId).toList());
+        return SearchRanker.rank(query, hits, opened, SEARCH_LIMIT).stream()
                 .map(SearchResult::of)
                 .toList();
     }
