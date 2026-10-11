@@ -1,5 +1,6 @@
 package com.caraoke.user;
 
+import com.caraoke.block.BlockService;
 import com.caraoke.media.MediaStorage;
 import com.caraoke.user.UserDtos.CreateProfileRequest;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import static org.mockito.Mockito.*;
 class SignupConsentTest {
 
     private final UserRepository users = mock(UserRepository.class);
-    private final UserService service = new UserService(users, mock(MediaStorage.class));
+    private final UserService service = new UserService(users, mock(MediaStorage.class), mock(BlockService.class));
 
     @Test
     void under13OrNoConsentCantSignUp() {
