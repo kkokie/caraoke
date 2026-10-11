@@ -89,6 +89,7 @@ class ProfileServiceTest {
     void ifYouBlockedThemYouSeeThatAndNoStories() {
         when(users.findUserIdByHandle("sam")).thenReturn(Optional.of(6L));
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(5L));
+        when(blocks.hasBlocked(6L, 5L)).thenReturn(false);
         when(blocks.hasBlocked(5L, 6L)).thenReturn(true);
         when(users.getByHandle("sam")).thenReturn(SAM);
         when(authorStories.stats(6L)).thenReturn(new AuthorStats(3, 12));

@@ -27,6 +27,7 @@ class StoryContentGuard {
     private final Clock clock;
     private final Set<String> blockedTerms;
 
+    @org.springframework.beans.factory.annotation.Autowired
     StoryContentGuard(StoryRepository stories, Clock clock) {
         this(stories, clock, load("moderation/blocked-terms.txt"));
     }
