@@ -1,5 +1,6 @@
 package com.caraoke.profile;
 
+import com.caraoke.block.BlockService;
 import com.caraoke.common.ApiErrors;
 import com.caraoke.follow.FollowService;
 import com.caraoke.profile.ProfileDtos.ProfileView;
@@ -19,8 +20,10 @@ public class ProfileService {
     private final UserService users;
     private final AuthorStoriesService authorStories;
     private final FollowService follows;
+    private final BlockService blocks;
 
-    public ProfileService(UserService users, AuthorStoriesService authorStories, FollowService follows) {
+    public ProfileService(UserService users, AuthorStoriesService authorStories, FollowService follows, BlockService blocks) {
+        this.blocks = blocks;
         this.users = users;
         this.authorStories = authorStories;
         this.follows = follows;
@@ -30,15 +33,23 @@ public class ProfileService {
         long userId = requireUser(handle);
         Long viewerId = users.findUserId(viewerAuthUid).orElse(null);
         boolean me = viewerId != null && viewerId == userId;
+        // If they blocked you, their profile doesn't exist for you
+        if (viewerId != null && !me && blocks.hasBlocked(userId, viewerId)) throw ApiErrors.notFound("User not found");
+        boolean blockedByMe = viewerId != null && !me && blocks.hasBlocked(viewerId, userId);
         return new ProfileView(
                 users.getByHandle(handle),
                 authorStories.stats(userId),
                 social(userId, viewerId, me),
-                me);
+                me,
+                blockedByMe);
     }
 
-    public StoryTilePage stories(String handle, Long beforeId, int limit) {
-        return authorStories.tiles(requireUser(handle), beforeId, limit);
+    /** A blocked profile (either way) shows no stories. */
+    public StoryTilePage stories(String viewerAuthUid, String handle, Long beforeId, int limit) {
+        long userId = requireUser(handle);
+        Long viewerId = users.findUserId(viewerAuthUid).orElse(null);
+        if (blocks.eitherBlocked(viewerId, userId)) return new StoryTilePage(java.util.List.of(), null);
+        return authorStories.tiles(userId, beforeId, limit);
     }
 
     private SocialView social(long userId, Long viewerId, boolean me) {

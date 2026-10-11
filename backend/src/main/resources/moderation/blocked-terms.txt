@@ -1,0 +1,8 @@
+# Blocked terms for stories and lyric lines: one per line, case-insensitive, matched as whole words.
+# Common character swaps are handled (0->o, 1->i, 3->e, 4->a, 5->s, @->a, $->s), so list plain spellings.
+#
+# Keep this to slurs and terms that are never acceptable in context. Stories are about real lives,
+# so over-blocking (e.g. ordinary swear words, body parts, drugs mentioned in a memory) does more
+# harm than good; user reports and the moderation queue handle everything else.
+#
+# Source suggestion: start from a vetted slur list and review each entry before adding it.

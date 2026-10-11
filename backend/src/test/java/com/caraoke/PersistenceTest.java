@@ -46,6 +46,8 @@ class PersistenceTest {
     @Autowired StoryRepository stories;
     @Autowired FollowRepository follows;
     @Autowired com.caraoke.user.UserRepository users;
+    @Autowired com.caraoke.block.BlockRepository blocks;
+    @Autowired com.caraoke.report.ReportRepository reports;
 
     // ---- resonances ---------------------------------------------------------
 
@@ -99,10 +101,10 @@ class PersistenceTest {
         long oldest = story(author, song), hidden = story(author, song), middle = story(author, song), newest = story(author, song);
         jdbc.update("UPDATE stories SET status = 'HIDDEN' WHERE id = ?", hidden);
 
-        List<Long> firstPage = ids(stories.findBySongIdAndStatusAndIdLessThanOrderByIdDesc(
-                song, StoryStatus.VISIBLE, Long.MAX_VALUE, Limit.of(2)));
-        List<Long> secondPage = ids(stories.findBySongIdAndStatusAndIdLessThanOrderByIdDesc(
-                song, StoryStatus.VISIBLE, firstPage.get(1), Limit.of(2)));
+        List<Long> firstPage = ids(stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                song, StoryStatus.VISIBLE, Long.MAX_VALUE, List.of(-1L), Limit.of(2)));
+        List<Long> secondPage = ids(stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                song, StoryStatus.VISIBLE, firstPage.get(1), List.of(-1L), Limit.of(2)));
 
         assertThat(firstPage).containsExactly(newest, middle);
         assertThat(secondPage).containsExactly(oldest);
@@ -235,9 +237,10 @@ class PersistenceTest {
         long seen = storyWith(sam, song, LONG, null);
         long fresh = storyWith(sam, song, LONG, null);
 
-        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "}")).get().extracting(Story::getId).isEqualTo(fresh);
-        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "," + fresh + "}")).isEmpty();
-        assertThat(stories.findRandomForDig(-1L, 80, "{}")).isPresent();       // signed-out viewer id
+        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "}", "{}")).get().extracting(Story::getId).isEqualTo(fresh);
+        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "," + fresh + "}", "{}")).isEmpty();
+        assertThat(stories.findRandomForDig(-1L, 80, "{}", "{}")).isPresent();       // signed-out viewer id
+        assertThat(stories.findRandomForDig(ian, 80, "{" + seen + "}", "{" + sam + "}")).isEmpty();   // blocked author
     }
 
     @Test
@@ -252,8 +255,10 @@ class PersistenceTest {
         assertThat(stories.countByYear()).extracting(StoryRepository.YearCount::getYear, StoryRepository.YearCount::getStories)
                 .containsExactly(org.assertj.core.groups.Tuple.tuple(2009, 2L), org.assertj.core.groups.Tuple.tuple(1998, 1L));
         assertThat(stories.topSongs(10)).extracting(StoryRepository.SongCount::getSongId).containsExactly(a, b);
-        assertThat(ids(stories.findByYearOfMemoryAndStatusAndIdLessThanOrderByIdDesc(
-                (short) 1998, StoryStatus.VISIBLE, Long.MAX_VALUE, Limit.of(10)))).hasSize(1);
+        assertThat(ids(stories.findByYearOfMemoryAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                (short) 1998, StoryStatus.VISIBLE, Long.MAX_VALUE, List.of(-1L), Limit.of(10)))).hasSize(1);
+        assertThat(ids(stories.findByYearOfMemoryAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                (short) 1998, StoryStatus.VISIBLE, Long.MAX_VALUE, List.of(ian), Limit.of(10)))).isEmpty();
     }
 
     @Test
@@ -277,6 +282,45 @@ class PersistenceTest {
         return jdbc.queryForObject(
                 "INSERT INTO stories (user_id, song_id, body, year_of_memory) VALUES (?, ?, ?, ?) RETURNING id",
                 Long.class, userId, songId, body, year);
+    }
+
+    // ---- safety -------------------------------------------------------------
+
+    @Test
+    void blocksHideBothWaysAndAreIdempotent() {
+        long ian = user("ian"), sam = user("sam"), joe = user("joe");
+        blocks.insertIfAbsent(ian, sam);
+        blocks.insertIfAbsent(ian, sam);                 // double tap
+        blocks.insertIfAbsent(joe, ian);                 // joe blocked ian
+
+        assertThat(blocks.findHiddenFrom(ian)).containsExactlyInAnyOrder(sam, joe);
+        assertThat(blocks.findHiddenFrom(sam)).containsExactly(ian);
+        assertThat(blocks.existsEitherWay(sam, ian)).isTrue();
+        assertThat(blocks.existsEitherWay(sam, joe)).isFalse();
+        assertThatThrownBy(() -> blocks.insertIfAbsent(ian, ian)).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void sameWordsSharedRecentlyAreFoundIgnoringCaseAndSpacing() {
+        long sam = user("sam"), song = song();
+        long s = storyWith(sam, song, "Dad's truck,   windows DOWN", null);
+
+        assertThat(stories.existsSameTextSince("dad's truck, windows down", java.time.Instant.now().minusSeconds(3600), -1L)).isTrue();
+        assertThat(stories.existsSameTextSince("dad's truck, windows down", java.time.Instant.now().minusSeconds(3600), s)).isFalse();
+        assertThat(stories.existsSameTextSince("something else", java.time.Instant.now().minusSeconds(3600), -1L)).isFalse();
+    }
+
+    @Test
+    void reportersAreCountedOncePerPerson() {
+        long ian = user("ian"), sam = user("sam"), joe = user("joe"), song = song();
+        long target = story(joe, song);
+        jdbc.update("INSERT INTO reports (reporter_id, target_type, target_id, reason) VALUES (?, 'STORY', ?, 'SPAM')", ian, target);
+        jdbc.update("INSERT INTO reports (reporter_id, target_type, target_id, reason) VALUES (?, 'STORY', ?, 'HATE')", ian, target);
+        jdbc.update("INSERT INTO reports (reporter_id, target_type, target_id, reason) VALUES (?, 'STORY', ?, 'SPAM')", sam, target);
+
+        assertThat(reports.countOpenReporters(com.caraoke.report.ReportTarget.STORY, target)).isEqualTo(2);
+        assertThat(reports.existsByReporterIdAndTargetTypeAndTargetIdAndResolvedAtIsNull(
+                ian, com.caraoke.report.ReportTarget.STORY, target)).isTrue();
     }
 
     // ---- fixtures (plain SQL so tests don't depend on entity constructors) ----

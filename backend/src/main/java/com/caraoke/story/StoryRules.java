@@ -20,6 +20,7 @@ final class StoryRules {
         String body = raw == null ? "" : raw.strip();
         if (body.isEmpty()) throw ApiErrors.badRequest("Write a few words about this song.");
         if (body.length() > MAX_BODY) throw ApiErrors.badRequest("Stories are up to 10,000 characters.");
+        ContentRules.check(body);
         return body;
     }
 
@@ -42,6 +43,7 @@ final class StoryRules {
         String line = raw.strip().replaceAll("^[\"“”]+|[\"“”]+$", "").strip();
         if (line.isEmpty()) return null;
         if (line.length() > MAX_LYRIC) throw ApiErrors.badRequest("Keep the lyric to a line or two (120 characters).");
+        ContentRules.check(line);
         return line;
     }
 

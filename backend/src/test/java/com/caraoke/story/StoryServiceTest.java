@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
@@ -53,11 +54,13 @@ class StoryServiceTest {
     @Mock UserService users;
     @Mock ResonanceService resonances;
     @Mock DailyShareLimit dailyLimit;
+    @Mock com.caraoke.block.BlockService blocks;
+    @Mock StoryContentGuard guard;
     StoryService service;
 
     @BeforeEach
     void setUp() {
-        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances), dailyLimit);
+        service = new StoryService(stories, songs, users, new StoryViewAssembler(users, resonances), dailyLimit, blocks, guard);
     }
 
     // ---- post ---------------------------------------------------------------
@@ -108,8 +111,8 @@ class StoryServiceTest {
         when(songs.get(SONG_ID)).thenReturn(SONG);
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
         // page size 2 -> repository asked for 3; the 3rd row only proves there's another page
-        when(stories.findBySongIdAndStatusAndIdLessThanOrderByIdDesc(
-                eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(Long.MAX_VALUE), any(Limit.class)))
+        when(stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(Long.MAX_VALUE), anyCollection(), any(Limit.class)))
                 .thenReturn(List.of(story(30L, IAN), story(20L, OTHER), story(10L, OTHER)));
         when(users.findAuthors(anySet())).thenReturn(AUTHORS);
         when(resonances.summaries(List.of(30L, 20L), IAN)).thenReturn(Map.of(20L, new ResonanceSummary(3, true)));
@@ -127,8 +130,8 @@ class StoryServiceTest {
     void feedLastPageHasNoCursor() {
         when(songs.get(SONG_ID)).thenReturn(SONG);
         when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
-        when(stories.findBySongIdAndStatusAndIdLessThanOrderByIdDesc(
-                eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(20L), any(Limit.class)))
+        when(stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(20L), anyCollection(), any(Limit.class)))
                 .thenReturn(List.of(story(10L, OTHER)));
         when(users.findAuthors(anySet())).thenReturn(AUTHORS);
         when(resonances.summaries(anyList(), any())).thenReturn(Map.of());
@@ -269,6 +272,28 @@ class StoryServiceTest {
         verifyNoInteractions(dailyLimit);
         assertThat(view.lyricQuote()).isEqualTo("a line");
         assertThat(view.paper()).isEqualTo("cream");             // null paper keeps the current one
+    }
+
+    @Test
+    void storiesFromSomeoneBlockedEitherWayDontExist() {
+        Story theirs = story(20L, OTHER);
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(stories.findById(20L)).thenReturn(Optional.of(theirs));
+        when(blocks.eitherBlocked(IAN, OTHER)).thenReturn(true);
+
+        assertStatus(() -> service.get("uid-ian", 20L), 404);
+    }
+
+    @Test
+    void feedLeavesOutBlockedAuthors() {
+        when(songs.get(SONG_ID)).thenReturn(SONG);
+        when(users.findUserId("uid-ian")).thenReturn(Optional.of(IAN));
+        when(blocks.hiddenFrom(IAN)).thenReturn(java.util.Set.of(OTHER));
+        when(stories.findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+                eq(SONG_ID), eq(StoryStatus.VISIBLE), eq(Long.MAX_VALUE), eq(List.of(OTHER)), any(Limit.class)))
+                .thenReturn(List.of());
+
+        assertThat(service.feed("uid-ian", SONG_ID, null, 20).items()).isEmpty();
     }
 
     // ---- helpers ------------------------------------------------------------

@@ -23,9 +23,10 @@ public class ProfileController {
 
     /** The grid, newest first. Pass nextCursor as ?before= for more. */
     @GetMapping("/stories")
-    public StoryTilePage stories(@PathVariable String handle,
+    public StoryTilePage stories(Authentication auth,
+                                 @PathVariable String handle,
                                  @RequestParam(name = "before", required = false) Long before,
                                  @RequestParam(name = "limit", defaultValue = "30") int limit) {
-        return service.stories(handle, before, limit);
+        return service.stories(auth.getName(), handle, before, limit);
     }
 }

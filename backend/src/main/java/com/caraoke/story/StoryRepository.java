@@ -5,14 +5,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface StoryRepository extends JpaRepository<Story, Long> {
 
-    /** Keyset page: newest first, strictly older than the cursor id. Backed by idx_stories_song_feed. */
-    List<Story> findBySongIdAndStatusAndIdLessThanOrderByIdDesc(
-            long songId, StoryStatus status, long beforeId, Limit limit);
+    /**
+     * Keyset page: newest first, strictly older than the cursor id, skipping authors hidden from the
+     * viewer by a block (pass BlockService.notInList, never empty). Backed by idx_stories_song_feed.
+     */
+    List<Story> findBySongIdAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+            long songId, StoryStatus status, long beforeId, Collection<Long> hiddenAuthors, Limit limit);
 
     /** One author's stories for their profile grid. Backed by idx_stories_user_feed. */
     List<Story> findByUserIdAndStatusAndIdLessThanOrderByIdDesc(
@@ -34,12 +38,14 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
               AND char_length(body) >= :minChars
               AND user_id <> :viewerId
               AND id <> ALL (CAST(:exclude AS bigint[]))
+              AND user_id <> ALL (CAST(:hidden AS bigint[]))
             ORDER BY random()
             LIMIT 1
             """, nativeQuery = true)
     Optional<Story> findRandomForDig(@Param("viewerId") long viewerId,
                                      @Param("minChars") int minChars,
-                                     @Param("exclude") String exclude);
+                                     @Param("exclude") String exclude,
+                                     @Param("hidden") String hiddenAuthors);
 
     /** Years that have stories, newest first, for the "dig through the years" strip. */
     @Query(value = """
@@ -55,8 +61,8 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
     }
 
     /** One year's stories, keyset paged newest first. Backed by idx_stories_year_feed. */
-    List<Story> findByYearOfMemoryAndStatusAndIdLessThanOrderByIdDesc(
-            short yearOfMemory, StoryStatus status, long beforeId, Limit limit);
+    List<Story> findByYearOfMemoryAndStatusAndIdLessThanAndUserIdNotInOrderByIdDesc(
+            short yearOfMemory, StoryStatus status, long beforeId, Collection<Long> hiddenAuthors, Limit limit);
 
     /** Songs with the most stories ("songs full of stories"). */
     @Query(value = """
@@ -71,6 +77,16 @@ public interface StoryRepository extends JpaRepository<Story, Long> {
         long getSongId();
         long getStories();
     }
+
+    /** The same words (case and spacing aside) shared since `since`, other than the story being edited. */
+    @Query(value = """
+            SELECT EXISTS (SELECT 1 FROM stories
+                           WHERE lower(regexp_replace(body, '\\s+', ' ', 'g')) = :normalized
+                             AND created_at > :since AND id <> :excludeId)
+            """, nativeQuery = true)
+    boolean existsSameTextSince(@Param("normalized") String normalized,
+                                @Param("since") java.time.Instant since,
+                                @Param("excludeId") long excludeId);
 
     long countByUserIdAndStatus(long userId, StoryStatus status);
 
